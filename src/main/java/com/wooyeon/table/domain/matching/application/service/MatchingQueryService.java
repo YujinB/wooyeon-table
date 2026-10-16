@@ -129,8 +129,12 @@ public class MatchingQueryService {
         List<String> reasons = new ArrayList<>();
         reasons.add("%s 지역을 고른 %d명이 나이 차 %d살 이내(%d~%d세)로 모였어요".formatted(table.getRegion().getLabel(),
                 table.size(), table.getMaxAge() - table.getMinAge(), table.getMinAge(), table.getMaxAge()));
-        if (table.getMaleCount() > 0 && table.getFemaleCount() > 0) {
+        int minority = Math.min(table.getMaleCount(), table.getFemaleCount());
+        if (minority * 3 >= table.size()) {
             reasons.add("남 %d명 · 여 %d명으로 성비를 맞췄어요".formatted(table.getMaleCount(), table.getFemaleCount()));
+        } else {
+            // 신청자 성비(여 199 : 남 95)상 고르게 못 맞춘 테이블은 구성만 알린다
+            reasons.add("남 %d명 · 여 %d명이 함께해요".formatted(table.getMaleCount(), table.getFemaleCount()));
         }
         if (me != null) {
             List<String> sharedInterests = me.interests().stream()
