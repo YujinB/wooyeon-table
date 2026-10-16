@@ -1,0 +1,21 @@
+HELP.md
+.gradle
+build/
+!gradle/wrapper/gradle-wrapper.jar
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+out/
+
+### VS Code ###
+.vscode/
+
+### 환경 설정·비밀값 ###
+.env
+src/main/resources/application-local.yml
+
+### 주최 측 제공 데이터 (공개 저장소에 올리지 않음) ###
+data/
