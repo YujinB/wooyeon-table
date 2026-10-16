@@ -1,7 +1,10 @@
 package com.wooyeon.table.domain.application.application.service;
 
+import com.wooyeon.table.domain.application.application.dto.ApplicationInfo;
 import com.wooyeon.table.domain.application.application.dto.MatchCandidateApplication;
 import com.wooyeon.table.domain.application.domain.repository.ApplicationRepository;
+import com.wooyeon.table.global.exception.BusinessException;
+import com.wooyeon.table.global.exception.ErrorCode;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -19,5 +22,12 @@ public class ApplicationQueryService {
         return applicationRepository.findMatchCandidates(slotId).stream()
                 .map(MatchCandidateApplication::from)
                 .toList();
+    }
+
+    public ApplicationInfo getApplication(Long applicationId) {
+        return applicationRepository.findById(applicationId)
+                .map(ApplicationInfo::from)
+                .orElseThrow(() -> new BusinessException(ErrorCode.APPLICATION_NOT_FOUND,
+                        String.valueOf(applicationId)));
     }
 }
