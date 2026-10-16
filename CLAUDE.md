@@ -21,8 +21,8 @@
 - 백엔드: Spring Boot 3.5.3, Java 21, JPA, MySQL, Lombok, Apache POI(엑셀 적재). Gradle wrapper는 TraceK와 동일
 - 프론트: React + Vite (같은 저장소 `frontend/` 예정)
 - 배포: **EC2 한 대에 Docker Compose**(백엔드 + MySQL), 프론트는 같은 EC2 nginx로 서빙
-- 로컬: `docker compose up -d` → MySQL 8.4가 **3307** 포트로 뜸 (3306은 PC에 설치된 mysqld가 사용 중). 테스트는 H2
-- 저장소: GitHub `YujinB/wooyeon-table`(공개, 아직 생성 전). `data/`는 주최 측 데이터라 .gitignore
+- 로컬: `docker compose up -d` → MySQL 8.4가 **3307** 포트로 뜸 (3306은 PC에 설치된 mysqld가 사용 중). 테스트는 H2를 쓰지 않고 **Testcontainers로 MySQL 8.4**를 띄움 (Docker 필요)
+- 저장소: GitHub `YujinB/wooyeon-table`(공개, 기본 브랜치 `develop`). `data/`는 주최 측 데이터라 .gitignore
 
 ## 패키지 구조 (TraceK식 DDD)
 ```
