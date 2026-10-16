@@ -20,3 +20,7 @@ management:
     web:
       exposure:
         include: health
+
+matching:
+  scheduler:
+    enabled: ${MATCHING_SCHEDULER_ENABLED:false}
