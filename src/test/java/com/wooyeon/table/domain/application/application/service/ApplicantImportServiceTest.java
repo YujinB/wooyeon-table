@@ -56,9 +56,9 @@ class ApplicantImportServiceTest {
 
         Map<MatchStatus, Long> byStatus = applicationJpaRepository.findAll().stream()
                 .collect(Collectors.groupingBy(a -> a.getMatchStatus(), Collectors.counting()));
-        // MatchingBenchmarkTest(그리디+개선)의 배정 212명 / 대체 안내 79명과 같아야 한다
-        assertThat(byStatus).containsEntry(MatchStatus.CONFIRMED, 212L)
-                .containsEntry(MatchStatus.ALTERNATIVE_OFFERED, 79L)
+        // MatchingBenchmarkTest(그리디+개선)의 배정 221명 / 대체 안내 70명과 같아야 한다
+        assertThat(byStatus).containsEntry(MatchStatus.CONFIRMED, 221L)
+                .containsEntry(MatchStatus.ALTERNATIVE_OFFERED, 70L)
                 .doesNotContainKey(MatchStatus.WAITING);
     }
 
