@@ -114,6 +114,7 @@ class MatchingBenchmarkTest {
             simulation.reallocations += result.stats().reallocations() + result.stats().displacements();
             simulation.moves += result.stats().moves() + result.stats().swaps();
             simulation.dissolved += result.stats().dissolvedTables();
+            simulation.splits += result.stats().splitTables();
         }
         simulation.confirmed = confirmed.size();
         for (ApplicantRow row : rows) {
@@ -139,6 +140,7 @@ class MatchingBenchmarkTest {
         private int reallocations;
         private int moves;
         private int dissolved;
+        private int splits;
         private double medianMillis;
 
         private String describe(String label, int total) {
@@ -151,13 +153,13 @@ class MatchingBenchmarkTest {
                       배정 %d / %d명 (%.1f%%), 대체 안내 %d명 %s
                       테이블 %d개, 인원 분포 %s, 최대 나이 차 %d
                       점수 평균 %.1f / 최저 %.1f
-                      재배치 %d회, 개선 이동·교환 %d회, 최소 점수 미달 해제 %d개
+                      재배치 %d회, 개선 이동·교환 %d회, 분리로 연 테이블 %d개, 최소 점수 미달 해제 %d개
 
                     """.formatted(label, sessions, TIMED_RUNS, medianMillis,
                     confirmed, total, confirmed * 100.0 / total, total - confirmed, failedReasons,
                     scores.size(), sizes, maxGap,
                     average, lowest,
-                    reallocations, moves, dissolved);
+                    reallocations, moves, splits, dissolved);
         }
     }
 }
