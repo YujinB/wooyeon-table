@@ -2,7 +2,7 @@ spring:
   application:
     name: wooyeon-table
   datasource:
-    url: ${DB_URL:jdbc:mysql://localhost:3306/wooyeon?serverTimezone=Asia/Seoul&characterEncoding=UTF-8}
+    url: ${DB_URL:jdbc:mysql://localhost:3307/wooyeon?serverTimezone=Asia/Seoul&characterEncoding=UTF-8}
     username: ${DB_USERNAME:wooyeon}
     password: ${DB_PASSWORD:wooyeon}
   jpa:
