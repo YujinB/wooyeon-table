@@ -11,6 +11,7 @@ import com.wooyeon.table.domain.event.application.service.EventSlotCommandServic
 import com.wooyeon.table.domain.event.application.service.EventSlotQueryService;
 import com.wooyeon.table.domain.event.domain.model.EventSlotStatus;
 import com.wooyeon.table.domain.matching.application.dto.MatchRunSummary;
+import com.wooyeon.table.domain.matching.application.scheduler.MatchingScheduler;
 import com.wooyeon.table.domain.matching.domain.model.DiningTable;
 import com.wooyeon.table.domain.matching.domain.model.FailureOutcome;
 import com.wooyeon.table.domain.matching.domain.model.MatchFailure;
@@ -27,7 +28,9 @@ import com.wooyeon.table.domain.profile.domain.model.Region;
 import com.wooyeon.table.domain.profile.domain.model.Trait;
 import com.wooyeon.table.domain.user.application.service.UserCommandService;
 import com.wooyeon.table.support.IntegrationTest;
+import java.time.Clock;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -133,6 +136,21 @@ class MatchingServiceTest {
         assertThat(diningTableRepository.findAllBySlotId(first)).hasSize(1);
     }
 
+    @Test
+    void 스케줄러는_매칭_시각이_지난_회차만_실행한다() {
+        Long first = eventSlotCommandService.findOrCreate(FIRST);
+        Long second = eventSlotCommandService.findOrCreate(SECOND);
+        apply(4, Region.EULJIRO_JONGNO, first);
+        apply(4, Region.EULJIRO_JONGNO, second);
+        // 첫 회차 매칭 시각(2일 전 12:00)과 둘째 회차 매칭 시각 사이
+        Clock betweenDeadlines = Clock.fixed(FIRST.atTime(13, 0).atZone(ZoneId.of("Asia/Seoul")).toInstant(),
+                ZoneId.of("Asia/Seoul"));
+
+        new MatchingScheduler(eventSlotQueryService, matchingService, betweenDeadlines).runDueSlots();
+
+        assertThat(eventSlotQueryService.getSlot(first).status()).isEqualTo(EventSlotStatus.MATCHED);
+        assertThat(eventSlotQueryService.getSlot(second).status()).isEqualTo(EventSlotStatus.RECRUITING);
+    }
 
     /** 서로 잘 맞는 신청자 count명 (성별 번갈아, 같은 관심사) */
     private List<Long> apply(int count, Region region, Long... slotIds) {
