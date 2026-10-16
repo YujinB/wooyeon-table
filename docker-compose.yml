@@ -1,0 +1,27 @@
+# 로컬 개발용 MySQL. 3306은 PC에 설치된 MySQL과 겹치지 않게 3307로 연다.
+# 실행: docker compose up -d
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: wooyeon-mysql
+    environment:
+      MYSQL_DATABASE: wooyeon
+      MYSQL_USER: wooyeon
+      MYSQL_PASSWORD: wooyeon
+      MYSQL_ROOT_PASSWORD: wooyeon-root
+      TZ: Asia/Seoul
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    ports:
+      - "3307:3306"
+    volumes:
+      - wooyeon-mysql:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uwooyeon", "-pwooyeon"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  wooyeon-mysql:
