@@ -3,10 +3,13 @@ package com.wooyeon.table.domain.application.domain.repository;
 import com.wooyeon.table.domain.application.domain.model.Application;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 public interface ApplicationRepository {
 
     Application save(Application application);
+
+    Optional<Application> findById(Long id);
 
     List<Application> findAllByIdIn(Collection<Long> ids);
 

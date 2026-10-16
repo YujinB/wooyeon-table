@@ -7,6 +7,7 @@ import com.wooyeon.table.domain.application.domain.model.PaymentStatus;
 import com.wooyeon.table.domain.application.domain.repository.ApplicationRepository;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -19,6 +20,11 @@ public class ApplicationRepositoryImpl implements ApplicationRepository {
     @Override
     public Application save(Application application) {
         return jpaRepository.save(application);
+    }
+
+    @Override
+    public Optional<Application> findById(Long id) {
+        return jpaRepository.findById(id);
     }
 
     @Override
