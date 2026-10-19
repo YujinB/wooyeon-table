@@ -24,6 +24,10 @@ public interface ApplicationJpaRepository extends JpaRepository<Application, Lon
     List<Application> findBySlotAndStatuses(Long slotId, ApplicationStatus applicationStatus,
                                             PaymentStatus paymentStatus, MatchStatus matchStatus);
 
+    List<Application> findAllByApplicationStatusNotOrderByIdDesc(ApplicationStatus applicationStatus);
+
+    List<Application> findAllByPaymentStatusOrderByIdDesc(PaymentStatus paymentStatus);
+
     boolean existsByUserId(Long userId);
 
     List<Application> findAllByUserIdOrderByIdDesc(Long userId);

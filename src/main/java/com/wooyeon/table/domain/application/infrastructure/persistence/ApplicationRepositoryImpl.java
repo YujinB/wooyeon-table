@@ -39,6 +39,16 @@ public class ApplicationRepositoryImpl implements ApplicationRepository {
     }
 
     @Override
+    public List<Application> findAllSubmitted() {
+        return jpaRepository.findAllByApplicationStatusNotOrderByIdDesc(ApplicationStatus.DRAFT);
+    }
+
+    @Override
+    public List<Application> findAllByPaymentStatus(PaymentStatus paymentStatus) {
+        return jpaRepository.findAllByPaymentStatusOrderByIdDesc(paymentStatus);
+    }
+
+    @Override
     public List<Application> findAllByUserId(Long userId) {
         return jpaRepository.findAllByUserIdOrderByIdDesc(userId);
     }

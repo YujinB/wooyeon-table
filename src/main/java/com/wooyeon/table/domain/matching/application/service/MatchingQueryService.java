@@ -94,6 +94,11 @@ public class MatchingQueryService {
 
     /** 참가자용 내 매칭 결과: 확정이면 테이블 요약과 "왜 이 테이블인지", 실패면 사유와 다음 단계 */
     /** 회차의 확정 테이블 요약 (식당 배정·단체방 생성 등 확정 후 처리용) */
+    /** 회차별 확정 테이블 수 (운영 대시보드) */
+    public Map<Long, Long> countTablesBySlot() {
+        return diningTableRepository.countBySlot();
+    }
+
     public List<ConfirmedTable> findConfirmedTables(Long slotId) {
         return diningTableRepository.findAllBySlotId(slotId).stream().map(ConfirmedTable::from).toList();
     }

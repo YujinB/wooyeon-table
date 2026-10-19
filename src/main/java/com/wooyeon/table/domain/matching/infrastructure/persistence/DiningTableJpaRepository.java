@@ -19,6 +19,9 @@ public interface DiningTableJpaRepository extends JpaRepository<DiningTable, Lon
     @Query("select s.table.id, s.userId from TableSeat s where s.userId in :userIds")
     List<Object[]> findTableIdAndUserIdByUserIdIn(Collection<Long> userIds);
 
+    @Query("select t.slotId, count(t) from DiningTable t group by t.slotId")
+    List<Object[]> countGroupBySlotId();
+
     @Query("select s.table.id from TableSeat s where s.applicationId = :applicationId")
     Optional<Long> findTableIdByApplicationId(Long applicationId);
 }

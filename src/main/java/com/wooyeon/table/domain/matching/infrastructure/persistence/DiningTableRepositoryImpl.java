@@ -42,6 +42,12 @@ public class DiningTableRepositoryImpl implements DiningTableRepository {
     }
 
     @Override
+    public Map<Long, Long> countBySlot() {
+        return jpaRepository.countGroupBySlotId().stream()
+                .collect(Collectors.toMap(row -> (Long) row[0], row -> (Long) row[1]));
+    }
+
+    @Override
     public Optional<DiningTable> findBySeatApplicationId(Long applicationId) {
         return jpaRepository.findTableIdByApplicationId(applicationId).flatMap(jpaRepository::findWithSeatsById);
     }
