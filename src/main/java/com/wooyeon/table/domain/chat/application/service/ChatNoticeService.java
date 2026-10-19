@@ -7,6 +7,9 @@ import com.wooyeon.table.domain.chat.domain.model.ChatRoom;
 import com.wooyeon.table.domain.chat.domain.repository.ChatMessageRepository;
 import com.wooyeon.table.domain.chat.domain.repository.ChatRoomRepository;
 import com.wooyeon.table.domain.chat.domain.service.MemberIntro;
+import com.wooyeon.table.domain.chat.domain.service.TableContentGenerator.Icebreaker;
+import com.wooyeon.table.domain.chat.domain.service.TableContentGenerator.TableContent;
+import com.wooyeon.table.domain.chat.domain.service.TableContentGenerator.Topic;
 import com.wooyeon.table.domain.event.application.dto.EventSlotInfo;
 import com.wooyeon.table.domain.event.application.service.EventSlotQueryService;
 import com.wooyeon.table.domain.matching.application.dto.TableDetail;
@@ -47,6 +50,7 @@ public class ChatNoticeService {
     private final EventSlotQueryService eventSlotQueryService;
     private final VenueQueryService venueQueryService;
     private final NotificationService notificationService;
+    private final TableContentService tableContentService;
     private final Clock clock;
 
     public void postConfirmationNotices(ChatRoom room) {
@@ -107,6 +111,26 @@ public class ChatNoticeService {
                             "policy", REMINDER_POLICY),
                     at, "EVENT_REMINDER:" + member.getApplicationId());
         }
+    }
+
+    /** 모임 시작 시각에 대화 주제·아이스브레이킹을 단체방에 게시하도록 예약 (CON-03) */
+    public void scheduleContent(ChatRoom room) {
+        EventSlotInfo slot = eventSlotQueryService.getSlot(room.getSlotId());
+        LocalDateTime now = LocalDateTime.now(clock);
+        LocalDateTime at = slot.startsAt().isBefore(now) ? now : slot.startsAt();
+        TableContent content = tableContentService.forTable(room.getTableId());
+        List<String> lines = new ArrayList<>();
+        lines.add("[오늘의 대화 주제]");
+        for (int i = 0; i < content.topics().size(); i++) {
+            Topic topic = content.topics().get(i);
+            lines.add((i + 1) + ". " + topic.question() + " (" + topic.basis() + ")");
+        }
+        lines.add("");
+        lines.add("[아이스브레이킹]");
+        for (Icebreaker game : content.icebreakers()) {
+            lines.add("· " + game.name() + ": " + game.howTo());
+        }
+        post(room, ChatMessageKind.CONTENT, String.join("\n", lines), at);
     }
 
     /** 식당이 늦게(운영자 재시도로) 배정된 테이블에 시간·장소 공지를 올린다 */
