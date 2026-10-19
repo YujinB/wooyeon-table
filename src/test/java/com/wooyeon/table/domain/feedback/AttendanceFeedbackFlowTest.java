@@ -170,6 +170,18 @@ class AttendanceFeedbackFlowTest {
                 .extracting(PersonPreference::getToUserId)
                 .containsExactlyInAnyOrder(members.get(1).userId(), members.get(2).userId());
         feedback(3).andExpect(jsonPath("$.data.mine").doesNotExist());
+
+        // 운영자 요약: 평균·순추천지수·한마디만, 사람별 선호는 담지 않음
+        String summary = mockMvc.perform(get("/api/admin/slots/" + slot + "/feedback")
+                        .header(HttpHeaders.AUTHORIZATION, admin()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.responses").value(1))
+                .andExpect(jsonPath("$.data.averages.tableMood").value(5.0))
+                .andExpect(jsonPath("$.data.nps").value(100))
+                .andExpect(jsonPath("$.data.tables.length()").value(1))
+                .andExpect(jsonPath("$.data.comments[0].comment").value("즐거웠어요"))
+                .andReturn().getResponse().getContentAsString();
+        assertThat(summary).doesNotContain("avoidSeats", "wantAgainSeats");
     }
 
     private ResultActions attendance(int seat, String action) throws Exception {

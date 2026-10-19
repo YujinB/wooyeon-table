@@ -1,4 +1,6 @@
+import { FormEvent, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { api, errorText } from '../api/client';
 import { Dashboard, SLOT_STATUS_LABEL } from '../api/adminTypes';
 import { ErrorBox, Loading } from '../components/ui';
 import { dateTime, day, time } from '../format';
@@ -10,10 +12,25 @@ const STATUS_TONE = { RECRUITING: '', MATCHED: 'ok', COMPLETED: 'gray' } as cons
 export default function DashboardPage() {
   const navigate = useNavigate();
   const dashboard = useApi<Dashboard>('/api/admin/dashboard');
+  const [eventDate, setEventDate] = useState('');
+  const [createError, setCreateError] = useState<string | null>(null);
   if (!dashboard.data) return dashboard.error ? <ErrorBox message={dashboard.error} /> : <Loading />;
   const { slots, exceptions } = dashboard.data;
   const now = Date.now();
   const upcoming = slots.filter((s) => s.status === 'RECRUITING' && new Date(s.matchAt).getTime() > now);
+
+  // 회차 생성: 목요일 19:30, 매칭(신청) 마감은 전날 0시(화요일 24:00)가 기본값
+  const createSlot = async (event: FormEvent) => {
+    event.preventDefault();
+    try {
+      await api.post('/api/admin/slots', { eventDate });
+      setEventDate('');
+      setCreateError(null);
+      await dashboard.reload();
+    } catch (e) {
+      setCreateError(errorText(e));
+    }
+  };
 
   const kpi = (label: string, value: number, alertWhenPositive = true) => (
     <div className={`kpi ${value > 0 && alertWhenPositive ? 'alert' : value === 0 ? 'zero' : ''}`}>
@@ -28,7 +45,13 @@ export default function DashboardPage() {
           <h1 className="h1">운영 대시보드</h1>
           <p className="muted" style={{ margin: 0 }}>매칭·식당·단체방·안내는 자동으로 처리돼요. 아래 예외만 확인하면 됩니다.</p>
         </div>
+        <form className="row" onSubmit={createSlot}>
+          <input className="input" type="date" value={eventDate} onChange={(e) => setEventDate(e.target.value)}
+            style={{ width: 170 }} aria-label="행사 날짜" />
+          <button className="btn btn-primary btn-sm" disabled={!eventDate}>회차 만들기</button>
+        </form>
       </div>
+      <ErrorBox message={createError} />
 
       <p className="section-title" style={{ marginTop: 0 }}>처리할 예외</p>
       <Link to="/admin/exceptions" className="kpis" style={{ display: 'grid' }}>

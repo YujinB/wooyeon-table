@@ -158,3 +158,42 @@ export interface AdminChatRoom {
   members: { alias: string; userId: number; applicationId: number; intro: string }[];
   messages: { kind: string; senderAlias: string | null; content: string; visibleAt: string; visible: boolean }[];
 }
+
+export interface SlotApplicant {
+  applicationId: number;
+  userId: number;
+  name: string;
+  ticketLabel: string;
+  regions: string[];
+  status: string;
+  statusLabel: string;
+  paymentStatusLabel: string;
+  confirmedHere: boolean;
+  submittedAt: string;
+}
+
+export interface AdminAttendance {
+  attendanceId: number;
+  userId: number;
+  tableId: number;
+  status: string;
+  statusLabel: string;
+  checkedInAt: string | null;
+}
+
+export interface FeedbackAverages {
+  tableMood: number;
+  conversation: number;
+  venue: number;
+  rejoinIntent: number;
+  recommendScore: number;
+}
+
+export interface SlotFeedbackSummary {
+  slotId: number;
+  responses: number;
+  averages: FeedbackAverages;
+  nps: number;
+  tables: { tableId: number; responses: number; averages: FeedbackAverages }[];
+  comments: { tableId: number; name: string; tableMood: number; comment: string }[];
+}

@@ -12,4 +12,6 @@ public interface FeedbackRepository {
     Optional<Feedback> findByApplicationId(Long applicationId);
 
     List<Feedback> findAllByTableId(Long tableId);
+
+    List<Feedback> findAllBySlotId(Long slotId);
 }
