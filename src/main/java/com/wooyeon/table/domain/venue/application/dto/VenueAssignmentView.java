@@ -9,6 +9,10 @@ public record VenueAssignmentView(Long tableId, Long slotId, VenueAssignmentStat
                                   String reservationName, String bookingReference, int attemptedVenues,
                                   String failureReason, LocalDateTime decidedAt) {
 
+    public boolean isAssigned() {
+        return status == VenueAssignmentStatus.ASSIGNED && venue != null;
+    }
+
     public static VenueAssignmentView of(VenueAssignment assignment, VenueInfo venue) {
         return new VenueAssignmentView(assignment.getTableId(), assignment.getSlotId(), assignment.getStatus(),
                 venue, assignment.getReservationName(), assignment.getBookingReference(),
