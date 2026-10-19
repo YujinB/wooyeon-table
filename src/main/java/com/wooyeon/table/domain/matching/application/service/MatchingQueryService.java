@@ -177,7 +177,7 @@ public class MatchingQueryService {
         }
         return new MyTable(table.getId(), slot.eventDate(), slot.startTime(), table.getRegion().getLabel(), table.size(),
                 table.getMinAge(), table.getMaxAge(), table.getMaleCount(), table.getFemaleCount(),
-                interestLabels(table.getCommonInterests()), reasons);
+                (int) Math.round(table.getTotalScore()), interestLabels(table.getCommonInterests()), reasons);
     }
 
     private MyFailure myFailure(MatchFailure failure) {
