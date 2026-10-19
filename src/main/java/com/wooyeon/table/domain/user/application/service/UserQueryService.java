@@ -19,6 +19,10 @@ public class UserQueryService {
 
     private final UserRepository userRepository;
 
+    public boolean existsByLoginId(String loginId) {
+        return userRepository.findByLoginId(loginId).isPresent();
+    }
+
     public UserInfo getUser(Long userId) {
         return userRepository.findById(userId)
                 .map(UserInfo::from)

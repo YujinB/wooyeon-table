@@ -1,12 +1,10 @@
 import { FormEvent, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { api, errorText } from '../api/client';
-import { Dashboard, SLOT_STATUS_LABEL } from '../api/adminTypes';
+import { Dashboard, slotStatusView } from '../api/adminTypes';
 import { ErrorBox, Loading } from '../components/ui';
 import { dateTime, day, time } from '../format';
 import { useApi } from '../useApi';
-
-const STATUS_TONE = { RECRUITING: '', MATCHED: 'ok', COMPLETED: 'gray' } as const;
 
 /** 운영 대시보드: 처리할 예외 건수와 회차별 신청·결제·매칭 현황 */
 export default function DashboardPage() {
@@ -93,7 +91,10 @@ export default function DashboardPage() {
             {slots.map((s) => (
               <tr key={s.slotId} className="link" onClick={() => navigate(`/admin/slots/${s.slotId}`)}>
                 <td><b>{day(s.eventDate)}</b> <span className="muted small">{time(s.startTime)}</span></td>
-                <td><span className={`pill ${STATUS_TONE[s.status]}`}>{SLOT_STATUS_LABEL[s.status]}</span></td>
+                <td>{(() => {
+                  const view = slotStatusView(s.status, s.matchAt);
+                  return <span className={`pill ${view.tone}`}>{view.label}</span>;
+                })()}</td>
                 <td className="small">{dateTime(s.matchAt)}</td>
                 <td className="num">{s.applicants}</td>
                 <td className="num">{s.paymentPending}</td>
