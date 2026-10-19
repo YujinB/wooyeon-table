@@ -37,6 +37,10 @@ public class User extends BaseTimeEntity {
     @Column(nullable = false, length = 20)
     private UserRole role;
 
+    /** 비밀번호 해시. 가상데이터로 적재한 사용자는 없음(로그인 불가) */
+    @Column(length = 100)
+    private String passwordHash;
+
     private User(String loginId, String name, UserRole role) {
         this.loginId = loginId;
         this.name = name;
@@ -49,5 +53,17 @@ public class User extends BaseTimeEntity {
 
     public static User admin(String loginId, String name) {
         return new User(loginId, name, UserRole.ADMIN);
+    }
+
+    public void changePasswordHash(String passwordHash) {
+        this.passwordHash = passwordHash;
+    }
+
+    public boolean canLogin() {
+        return passwordHash != null;
+    }
+
+    public boolean isAdmin() {
+        return role == UserRole.ADMIN;
     }
 }
