@@ -27,4 +27,9 @@ public class FeedbackRepositoryImpl implements FeedbackRepository {
     public List<Feedback> findAllByTableId(Long tableId) {
         return jpaRepository.findAllByTableIdOrderByIdAsc(tableId);
     }
+
+    @Override
+    public List<Feedback> findAllBySlotId(Long slotId) {
+        return jpaRepository.findAllBySlotIdOrderByIdAsc(slotId);
+    }
 }

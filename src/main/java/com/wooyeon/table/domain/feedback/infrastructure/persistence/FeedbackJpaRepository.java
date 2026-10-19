@@ -10,4 +10,6 @@ public interface FeedbackJpaRepository extends JpaRepository<Feedback, Long> {
     Optional<Feedback> findByApplicationId(Long applicationId);
 
     List<Feedback> findAllByTableIdOrderByIdAsc(Long tableId);
+
+    List<Feedback> findAllBySlotIdOrderByIdAsc(Long slotId);
 }
