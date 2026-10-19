@@ -1,4 +1,7 @@
+import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { api } from '../api/client';
+import { MyNotifications } from '../api/types';
 import { Icon } from '../components/Icon';
 import { LogoMark } from '../components/Logo';
 
@@ -14,6 +17,12 @@ export default function AppLayout() {
   const location = useLocation();
   const navigate = useNavigate();
   const isRoot = location.pathname === '/app';
+  const [unread, setUnread] = useState(0);
+
+  // 화면을 옮길 때마다 안 읽은 알림 수를 다시 센다
+  useEffect(() => {
+    api.get<MyNotifications>('/api/app/notifications').then((n) => setUnread(n.unreadCount)).catch(() => undefined);
+  }, [location.pathname]);
   return (
     <div className="app-shell">
       <header className="app-header">
@@ -25,8 +34,9 @@ export default function AppLayout() {
           </button>
         )}
         <div className="title">우연한 식탁</div>
-        <NavLink to="/app/notifications" aria-label="알림" style={{ color: 'var(--brand-strong)', display: 'flex' }}>
+        <NavLink to="/app/notifications" aria-label="알림" style={{ color: 'var(--brand-strong)', display: 'flex', position: 'relative' }}>
           <Icon name="bell" />
+          {unread > 0 && <span className="badge">{unread > 9 ? '9+' : unread}</span>}
         </NavLink>
       </header>
       <main className="app-main">

@@ -49,7 +49,7 @@ public class ChatService {
         ChatRoom room = memberRoom(userId, roomId);
         ChatMember me = room.memberOf(userId).orElseThrow();
         List<Member> members = room.getMembers().stream()
-                .map(member -> new Member(member.getAlias(), member.getIntro(), member.getUserId().equals(userId)))
+                .map(member -> new Member(member.getSeatNo(), member.getAlias(), member.getIntro(), member.getUserId().equals(userId)))
                 .toList();
         List<Message> messages = chatMessageRepository.findVisible(roomId, LocalDateTime.now(clock)).stream()
                 .map(message -> new Message(message.getId(), message.getKind(), message.isSystem(),

@@ -11,7 +11,8 @@ import java.util.List;
 public record ChatRoomView(Long roomId, String title, LocalDate eventDate, String myAlias, List<Member> members,
                            List<Message> messages) {
 
-    public record Member(String alias, String intro, boolean me) {
+    /** seatNo: 신고·차단할 때 상대를 가리키는 번호 (실명·계정 대신) */
+    public record Member(int seatNo, String alias, String intro, boolean me) {
     }
 
     public record Message(Long messageId, ChatMessageKind kind, boolean system, String senderAlias, String content,

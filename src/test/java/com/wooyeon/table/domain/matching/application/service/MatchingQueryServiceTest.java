@@ -125,6 +125,7 @@ class MatchingQueryServiceTest {
         assertThat(mine.failure()).isNull();
         assertThat(mine.table().eventDate()).isEqualTo(FIRST);
         assertThat(mine.table().size()).isEqualTo(5);
+        assertThat(mine.table().score()).isBetween(50, 100);
         assertThat(mine.table().reasons())
                 .anySatisfy(reason -> assertThat(reason).contains("홍대/합정", "5명", "30~30세"))
                 .anySatisfy(reason -> assertThat(reason).contains("성비"))
