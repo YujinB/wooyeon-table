@@ -39,6 +39,7 @@ public class ChatNoticeService {
 
     static final DateTimeFormatter DATE = DateTimeFormatter.ofPattern("M/d(E)", Locale.KOREAN);
     static final DateTimeFormatter TIME = DateTimeFormatter.ofPattern("HH:mm");
+    static final String REMINDER_POLICY = "지금부터는 취소해도 환불되지 않고, 당일 취소·노쇼는 다음 매칭에 반영돼요.";
 
     private final ChatRoomRepository chatRoomRepository;
     private final ChatMessageRepository chatMessageRepository;
@@ -74,6 +75,37 @@ public class ChatNoticeService {
                             "region", table.regionLabel(),
                             "venue", venue),
                     "MATCH_CONFIRMED:" + member.getApplicationId());
+        }
+    }
+
+    /**
+     * 행사 1일 전 리마인드 예약 (INF-07): 전날 12시에 단체방 공지가 보이고 멤버 전원에게 알림이 간다.
+     * 시간·장소·예약명·취소 및 노쇼 정책. 확정이 이미 전날 12시 이후면 바로 보낸다
+     */
+    public void scheduleReminder(ChatRoom room) {
+        EventSlotInfo slot = eventSlotQueryService.getSlot(room.getSlotId());
+        LocalDateTime now = LocalDateTime.now(clock);
+        LocalDateTime at = slot.reminderAt().isBefore(now) ? now : slot.reminderAt();
+        Optional<VenueAssignmentView> venue = assignedVenue(room.getTableId());
+        String venueName = venue.map(assigned -> assigned.venue().name()).orElse("단체방에 안내된 식당");
+        String address = venue.map(assigned -> assigned.venue().address()).orElse("단체방 공지 참고");
+        String reservationName = venue.map(VenueAssignmentView::reservationName).orElse("단체방 공지 참고");
+
+        post(room, ChatMessageKind.REMINDER, String.join("\n",
+                "[내일 모임 안내]",
+                slot.eventDate().format(DATE) + " " + slot.startTime().format(TIME) + " 집합 · " + venueName,
+                "주소: " + address,
+                "예약명: " + reservationName,
+                REMINDER_POLICY), at);
+        for (ChatMember member : room.getMembers()) {
+            notificationService.schedule(member.getUserId(), member.getApplicationId(),
+                    NotificationType.EVENT_REMINDER, Map.of(
+                            "time", slot.startTime().format(TIME),
+                            "venue", venueName,
+                            "address", address,
+                            "reservationName", reservationName,
+                            "policy", REMINDER_POLICY),
+                    at, "EVENT_REMINDER:" + member.getApplicationId());
         }
     }
 

@@ -32,6 +32,7 @@ public class TableConfirmationListener {
         for (ChatRoom room : chatRoomService.openForSlot(event.slotId())) {
             chatNoticeService.postConfirmationNotices(room);
             chatNoticeService.notifyConfirmed(room);
+            chatNoticeService.scheduleReminder(room);
         }
     }
 }
