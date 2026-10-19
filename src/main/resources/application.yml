@@ -43,6 +43,10 @@ attendance:
   check-in-opens-hours-before: 2
   # 데모용: 모임 당일이 아니어도 확정 직후부터 체크인 허용 (실제 운영은 false)
   check-in-anytime: ${ATTENDANCE_CHECK_IN_ANYTIME:true}
+  auto-close:
+    # 행사 시작 후 이 시간이 지나면 자동 종료 처리 (미체크인 → 노쇼 후보, 후기 요청). 배포에서 켬
+    enabled: ${EVENT_AUTO_CLOSE_ENABLED:false}
+    hours-after-start: 4
 
 demo:
   seed:

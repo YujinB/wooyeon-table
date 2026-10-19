@@ -88,11 +88,11 @@ export default function TablePage() {
             {t.seats.map((s, i) => (
               <tr key={s.applicationId}>
                 <td>{i + 1}</td>
-                <td><b>{s.name}</b></td>
-                <td>{s.age ?? '-'} · {s.gender}</td>
-                <td>{s.mbti ?? '-'}</td>
-                <td className="small">{s.interests.join(', ')}</td>
-                <td className="small">{s.placementDescription}{s.relocationCount > 0 && ` (재배치 ${s.relocationCount})`}</td>
+                <td className="nowrap"><b>{s.name}</b></td>
+                <td className="nowrap">{s.age ?? '-'} · {s.gender}</td>
+                <td className="nowrap">{s.mbti ?? '-'}</td>
+                <td className="small" style={{ minWidth: 180 }}>{s.interests.join(', ')}</td>
+                <td className="small" style={{ minWidth: 220 }}>{s.placementDescription}{s.relocationCount > 0 && ` (재배치 ${s.relocationCount})`}</td>
                 <td>{s.preferenceMet ? <span className="pill ok">충족</span> : <span className="pill gray">미충족</span>}</td>
               </tr>
             ))}

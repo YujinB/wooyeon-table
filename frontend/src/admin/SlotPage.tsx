@@ -143,7 +143,7 @@ function MatchingTab({ result: r }: { result: SlotMatchingResult }) {
               <tbody>
                 {r.failures.map((f) => (
                   <tr key={f.applicationId}>
-                    <td>{f.name}</td>
+                    <td className="nowrap">{f.name}</td>
                     <td>{f.reasonDescription}</td>
                     <td>
                       <span className={`pill ${f.outcome === 'CARRIED_OVER' ? '' : 'warn'}`}>
@@ -175,7 +175,7 @@ function ApplicantsTab({ slotId }: { slotId: string }) {
         <tbody>
           {applicants.data.map((a) => (
             <tr key={a.applicationId}>
-              <td><b>{a.name}</b></td>
+              <td className="nowrap"><b>{a.name}</b></td>
               <td>{a.ticketLabel}</td>
               <td className="small">{a.regions.join(', ')}</td>
               <td><span className={`pill ${statusTone(a.status)}`}>{a.statusLabel}</span></td>
@@ -211,7 +211,7 @@ function AttendanceTab({ slotId }: { slotId: string }) {
           <tbody>
             {attendances.data.map((a) => (
               <tr key={a.attendanceId}>
-                <td><b>{names.get(a.userId) ?? `사용자 ${a.userId}`}</b></td>
+                <td className="nowrap"><b>{names.get(a.userId) ?? `사용자 ${a.userId}`}</b></td>
                 <td><Link to={`/admin/tables/${a.tableId}`} style={{ color: 'var(--brand)' }}>#{a.tableId}</Link></td>
                 <td>{a.statusLabel}</td>
                 <td className="small">{a.checkedInAt ? dateTime(a.checkedInAt) : '-'}</td>
