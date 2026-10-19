@@ -13,7 +13,12 @@ import com.wooyeon.table.domain.feedback.application.service.AttendanceQueryServ
 import com.wooyeon.table.domain.matching.application.service.MatchingQueryService;
 import com.wooyeon.table.domain.notification.application.dto.NotificationFailure;
 import com.wooyeon.table.domain.notification.application.service.NotificationQueryService;
+import com.wooyeon.table.domain.operation.application.dto.AdminRows.NotificationRow;
+import com.wooyeon.table.domain.operation.application.dto.AdminRows.PaymentRow;
+import com.wooyeon.table.domain.operation.application.dto.AdminRows.ReportRow;
 import com.wooyeon.table.domain.operation.application.dto.Dashboard;
+import com.wooyeon.table.domain.payment.application.dto.PaymentRecordView;
+import com.wooyeon.table.domain.payment.application.service.PaymentQueryService;
 import com.wooyeon.table.domain.operation.application.dto.Dashboard.ExceptionCounts;
 import com.wooyeon.table.domain.operation.application.dto.Dashboard.SlotOverview;
 import com.wooyeon.table.domain.operation.application.dto.ExceptionItem;
@@ -58,6 +63,7 @@ public class OperationQueryService {
     private final AttendanceQueryService attendanceQueryService;
     private final SanctionService sanctionService;
     private final UserQueryService userQueryService;
+    private final PaymentQueryService paymentQueryService;
 
     public Dashboard dashboard() {
         List<ApplicationInfo> applications = applicationQueryService.findAllSubmitted();
@@ -117,6 +123,36 @@ public class OperationQueryService {
                             status.getLabel(), application.paymentStatus().getLabel(),
                             slotId.equals(application.confirmedSlotId()), application.submittedAt());
                 })
+                .toList();
+    }
+
+    /** 결제·환불 내역 (최근 500건) */
+    public List<PaymentRow> payments() {
+        List<PaymentRecordView> payments = paymentQueryService.findRecent();
+        Map<Long, String> names = userQueryService.findNames(payments.stream().map(PaymentRecordView::userId).toList());
+        return payments.stream().map(payment -> new PaymentRow(names.get(payment.userId()), payment)).toList();
+    }
+
+    /** 자동 메시지 발송 이력 (최근 500건) */
+    public List<NotificationRow> notifications() {
+        List<NotificationFailure> notifications = notificationQueryService.findRecent();
+        Map<Long, String> names = userQueryService.findNames(
+                notifications.stream().map(NotificationFailure::userId).toList());
+        return notifications.stream()
+                .map(notification -> new NotificationRow(names.get(notification.userId()), notification))
+                .toList();
+    }
+
+    /** 신고 전체 이력 (처리된 것 포함, 최신부터) */
+    public List<ReportRow> reportHistory() {
+        List<ReportView> reports = sanctionService.reports(false);
+        Map<Long, String> names = userQueryService.findNames(reports.stream()
+                .flatMap(report -> Stream.of(report.reporterUserId(), report.reportedUserId()))
+                .collect(Collectors.toSet()));
+        return reports.stream()
+                .sorted(Comparator.comparing(ReportView::reportedAt).reversed())
+                .map(report -> new ReportRow(names.get(report.reporterUserId()), names.get(report.reportedUserId()),
+                        report))
                 .toList();
     }
 

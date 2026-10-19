@@ -19,5 +19,7 @@ public interface NotificationJpaRepository extends JpaRepository<Notification, L
 
     List<Notification> findAllByStatusOrderByIdAsc(NotificationStatus status);
 
+    List<Notification> findTop500ByOrderByIdDesc();
+
     List<Notification> findAllByApplicationIdOrderByIdAsc(Long applicationId);
 }

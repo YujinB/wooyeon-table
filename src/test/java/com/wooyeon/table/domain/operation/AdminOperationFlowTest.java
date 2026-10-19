@@ -100,6 +100,13 @@ class AdminOperationFlowTest {
         mockMvc.perform(get("/api/admin/exceptions").header(HttpHeaders.AUTHORIZATION, admin()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data[?(@.type == 'NO_SHOW' && @.slotId == " + slotId + ")]", hasSize(5)));
+
+        // 자동 메시지 발송 이력: 확정 알림 5건이 이름과 함께 발송됨
+        mockMvc.perform(get("/api/admin/notifications").header(HttpHeaders.AUTHORIZATION, admin()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data[?(@.notification.type == 'MATCH_CONFIRMED' && @.notification.status == 'SENT' && @.name =~ /운영테스트.*/)]", hasSize(5)));
+        mockMvc.perform(get("/api/admin/report-history").header(HttpHeaders.AUTHORIZATION, admin()))
+                .andExpect(status().isOk());
     }
 
     @Test

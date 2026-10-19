@@ -40,6 +40,10 @@ export default function AdminLayout() {
           <Icon name="alert" size={20} />예외 처리함
           {openExceptions > 0 && <span className="count">{openExceptions}</span>}
         </NavLink>
+        <NavLink to="/admin/venues"><Icon name="dining" size={20} />식당 재고</NavLink>
+        <NavLink to="/admin/payments"><Icon name="ticket" size={20} />결제·환불</NavLink>
+        <NavLink to="/admin/notifications"><Icon name="bell" size={20} />자동 메시지 이력</NavLink>
+        <NavLink to="/admin/reports"><Icon name="shield" size={20} />신고 이력</NavLink>
         <button className="admin-logout" onClick={logout}><Icon name="logout" size={20} />로그아웃</button>
       </aside>
       <main className="admin-main">

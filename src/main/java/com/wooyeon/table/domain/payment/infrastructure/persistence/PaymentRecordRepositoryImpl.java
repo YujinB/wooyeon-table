@@ -21,4 +21,9 @@ public class PaymentRecordRepositoryImpl implements PaymentRecordRepository {
     public List<PaymentRecord> findAllByApplicationId(Long applicationId) {
         return jpaRepository.findAllByApplicationIdOrderByIdAsc(applicationId);
     }
+
+    @Override
+    public List<PaymentRecord> findRecent() {
+        return jpaRepository.findTop500ByOrderByIdDesc();
+    }
 }

@@ -165,6 +165,13 @@ class PaymentFlowTest {
                 .andExpect(jsonPath("$.data.paymentStatus").value("REFUNDED"));
         mockMvc.perform(authed(get("/api/admin/exceptions"), admin))
                 .andExpect(jsonPath(refundItem).doesNotExist());
+        // 결제·환불 내역: 결제 1건, 실패한 환불 1건, 성공한 환불 1건 (최신부터)
+        String records = "$.data[?(@.payment.applicationId == " + applicationId + ")]";
+        mockMvc.perform(authed(get("/api/admin/payments"), admin))
+                .andExpect(jsonPath(records + ".payment.type").value(
+                        org.hamcrest.Matchers.contains("REFUND", "REFUND", "CHARGE")))
+                .andExpect(jsonPath(records + ".payment.success").value(
+                        org.hamcrest.Matchers.contains(true, false, true)));
 
         mockMvc.perform(authed(get("/api/app/policies/refund"), token))
                 .andExpect(status().isOk())

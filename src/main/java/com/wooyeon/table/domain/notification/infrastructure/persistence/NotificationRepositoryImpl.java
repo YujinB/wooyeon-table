@@ -49,6 +49,11 @@ public class NotificationRepositoryImpl implements NotificationRepository {
     }
 
     @Override
+    public List<Notification> findRecent() {
+        return jpaRepository.findTop500ByOrderByIdDesc();
+    }
+
+    @Override
     public List<Notification> findAllByApplicationId(Long applicationId) {
         return jpaRepository.findAllByApplicationIdOrderByIdAsc(applicationId);
     }
