@@ -1,8 +1,11 @@
 package com.wooyeon.table.domain.demo.application;
 
 import com.wooyeon.table.domain.user.application.DemoAccountInitializer;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -16,15 +19,24 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @Order(10)
-@RequiredArgsConstructor
 @ConditionalOnProperty(name = "demo.seed.enabled", havingValue = "true")
+@RequiredArgsConstructor
 public class DemoSeedRunner implements ApplicationRunner {
 
     private final DemoSeedService demoSeedService;
 
+    /** 신청자 엑셀 경로 (DEMO_APPLICANTS_FILE). 비우거나 파일이 없으면 가상데이터 없이 시드 */
+    @Value("${demo.seed.applicants-file:}")
+    private String applicantsFile;
+
     @Override
     public void run(ApplicationArguments args) {
-        if (!demoSeedService.seedIfEmpty(DemoAccountInitializer.PARTICIPANT_LOGIN_IDS)) {
+        Path file = applicantsFile.isBlank() ? null : Path.of(applicantsFile);
+        if (file != null && !Files.isRegularFile(file)) {
+            log.warn("신청자 엑셀이 없어 가상데이터 없이 시드: {}", file);
+            file = null;
+        }
+        if (!demoSeedService.seedIfEmpty(DemoAccountInitializer.PARTICIPANT_LOGIN_IDS, file)) {
             log.info("데모 시드가 이미 있어 건너뜀");
         }
     }
