@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-@ConditionalOnProperty(name = "matching.scheduler.enabled", havingValue = "true", matchIfMissing = true)
+@ConditionalOnProperty(name = "matching.scheduler.enabled", havingValue = "true")
 public class MatchingScheduler {
 
     private final EventSlotQueryService eventSlotQueryService;
