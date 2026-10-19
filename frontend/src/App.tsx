@@ -8,6 +8,8 @@ import ApplyPage from './app/ApplyPage';
 import PayPage from './app/PayPage';
 import ApplicationPage from './app/ApplicationPage';
 import MatchPage from './app/MatchPage';
+import ChatsPage from './app/ChatsPage';
+import ChatRoomPage from './app/ChatRoomPage';
 
 function RequireParticipant({ children }: { children: JSX.Element }) {
   return session.token() ? children : <Navigate to="/app/login" replace />;
@@ -32,6 +34,8 @@ export default function App() {
         <Route path="applications/:id" element={<ApplicationPage />} />
         <Route path="applications/:id/pay" element={<PayPage />} />
         <Route path="applications/:id/match" element={<MatchPage />} />
+        <Route path="chats" element={<ChatsPage />} />
+        <Route path="chats/:roomId" element={<ChatRoomPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/app" replace />} />
     </Routes>
