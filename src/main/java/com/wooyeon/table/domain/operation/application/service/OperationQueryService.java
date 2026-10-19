@@ -26,7 +26,9 @@ import com.wooyeon.table.domain.user.application.service.UserQueryService;
 import com.wooyeon.table.domain.venue.application.dto.VenueAssignmentView;
 import com.wooyeon.table.domain.venue.application.service.VenueQueryService;
 import java.time.LocalDateTime;
+import com.wooyeon.table.domain.feedback.domain.model.AttendanceStatus;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -69,7 +71,32 @@ public class OperationQueryService {
                 notificationQueryService.findGaveUp().size(), attendanceQueryService.findNoShowCandidates().size(),
                 reports.size(), (int) reports.stream().filter(ReportView::urgent).count(),
                 applicationQueryService.findByPaymentStatus(PaymentStatus.REFUND_FAILED).size());
-        return new Dashboard(slots, counts);
+        return new Dashboard(totals(applications, tables), slots, counts);
+    }
+
+    private Dashboard.Totals totals(List<ApplicationInfo> applications, Map<Long, Long> tablesBySlot) {
+        Set<PaymentStatus> everPaid = EnumSet.of(PaymentStatus.PAID, PaymentStatus.REFUND_AVAILABLE,
+                PaymentStatus.REFUND_REQUESTED, PaymentStatus.REFUND_PROCESSING, PaymentStatus.REFUNDED,
+                PaymentStatus.REFUND_FAILED);
+        long paid = applications.stream().filter(application -> everPaid.contains(application.paymentStatus())).count();
+        long confirmed = count(applications, MatchStatus.CONFIRMED);
+        long awaitingChoice = count(applications, MatchStatus.ALTERNATIVE_OFFERED);
+        long failed = awaitingChoice + count(applications, MatchStatus.NO_MATCH);
+        long tables = tablesBySlot.values().stream().mapToLong(Long::longValue).sum();
+        Map<AttendanceStatus, Long> attendance = attendanceQueryService.countByStatus();
+        long attended = attendance.get(AttendanceStatus.ATTENDED);
+        long noShow = attendance.get(AttendanceStatus.NO_SHOW) + attendance.get(AttendanceStatus.NO_SHOW_CANDIDATE);
+        return new Dashboard.Totals(applications.size(), paid, confirmed, percent(confirmed, confirmed + failed),
+                tables, tables > 0 ? 100 : null, awaitingChoice, attended, noShow,
+                percent(attended, attended + noShow));
+    }
+
+    private static long count(List<ApplicationInfo> applications, MatchStatus status) {
+        return applications.stream().filter(application -> application.matchStatus() == status).count();
+    }
+
+    private static Integer percent(long part, long whole) {
+        return whole == 0 ? null : (int) Math.round(part * 100.0 / whole);
     }
 
     /** 이 날짜를 고른 신청자 (다른 날짜로 확정된 신청 제외), 최근 신청부터 */

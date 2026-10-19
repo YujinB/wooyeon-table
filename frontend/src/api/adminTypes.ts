@@ -53,7 +53,20 @@ export interface ExceptionCounts {
   total: number;
 }
 
-export interface Dashboard { slots: SlotOverview[]; exceptions: ExceptionCounts }
+export interface DashboardTotals {
+  applications: number;
+  paid: number;
+  confirmed: number;
+  matchSuccessRate: number | null;
+  tables: number;
+  autoConfirmRate: number | null;
+  awaitingChoice: number;
+  attended: number;
+  noShow: number;
+  attendanceRate: number | null;
+}
+
+export interface Dashboard { totals: DashboardTotals; slots: SlotOverview[]; exceptions: ExceptionCounts }
 
 export type ExceptionType = 'REPORT' | 'VENUE' | 'REFUND' | 'NOTIFICATION' | 'NO_SHOW';
 

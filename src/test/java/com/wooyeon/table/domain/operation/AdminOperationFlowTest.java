@@ -81,7 +81,15 @@ class AdminOperationFlowTest {
                 .andExpect(jsonPath(slot + ".matchFailed").value(1))
                 .andExpect(jsonPath(slot + ".tables").value(1))
                 .andExpect(jsonPath("$.data.exceptions.noShow").value(5))
-                .andExpect(jsonPath("$.data.exceptions.total").value(5));
+                .andExpect(jsonPath("$.data.exceptions.total").value(5))
+                // 6명 신청·결제 → 5명 확정, 1명 대체 안내 → 매칭 성공률 83%, 종료 후 5명 모두 노쇼 후보
+                .andExpect(jsonPath("$.data.totals.applications").value(6))
+                .andExpect(jsonPath("$.data.totals.paid").value(6))
+                .andExpect(jsonPath("$.data.totals.confirmed").value(5))
+                .andExpect(jsonPath("$.data.totals.matchSuccessRate").value(83))
+                .andExpect(jsonPath("$.data.totals.autoConfirmRate").value(100))
+                .andExpect(jsonPath("$.data.totals.awaitingChoice").value(1))
+                .andExpect(jsonPath("$.data.totals.attendanceRate").value(0));
 
         mockMvc.perform(get("/api/admin/slots/" + slotId + "/applicants").header(HttpHeaders.AUTHORIZATION, admin()))
                 .andExpect(status().isOk())
