@@ -7,6 +7,7 @@ import com.wooyeon.table.domain.matching.application.service.MatchingQueryServic
 import com.wooyeon.table.domain.profile.application.service.ProfileQueryService;
 import com.wooyeon.table.domain.profile.domain.model.MealBudget;
 import com.wooyeon.table.domain.venue.application.dto.SlotVenueAssignmentResult;
+import com.wooyeon.table.domain.venue.application.event.VenueAssignedEvent;
 import com.wooyeon.table.domain.venue.domain.model.Venue;
 import com.wooyeon.table.domain.venue.domain.model.VenueAssignment;
 import com.wooyeon.table.domain.venue.domain.repository.VenueAssignmentRepository;
@@ -24,6 +25,7 @@ import java.util.Map;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -45,6 +47,7 @@ public class VenueAssignmentService {
     private final VenueRepository venueRepository;
     private final VenueAssignmentRepository venueAssignmentRepository;
     private final VenueBookingGateway venueBookingGateway;
+    private final ApplicationEventPublisher eventPublisher;
     private final Clock clock;
 
     /** 회차의 확정 테이블 중 아직 배정되지 않은 테이블에 식당을 배정한다 (테이블 번호 순) */
@@ -67,7 +70,11 @@ public class VenueAssignmentService {
     /** 운영자 재시도 (식당 재고를 늘리거나 다시 연 뒤) */
     public VenueAssignment retryTable(Long tableId) {
         ConfirmedTable table = matchingQueryService.getConfirmedTable(tableId);
-        return assign(table, eventSlotQueryService.getSlot(table.slotId()));
+        VenueAssignment result = assign(table, eventSlotQueryService.getSlot(table.slotId()));
+        if (result.isAssigned()) {
+            eventPublisher.publishEvent(new VenueAssignedEvent(tableId));
+        }
+        return result;
     }
 
     private VenueAssignment assign(ConfirmedTable table, EventSlotInfo slot) {

@@ -39,7 +39,7 @@ public final class MemberIntro {
     }
 
     /** 27 → "20대 후반" */
-    static String ageBand(int age) {
+    public static String ageBand(int age) {
         int decade = age / 10 * 10;
         int rest = age % 10;
         String part = rest <= 3 ? "초반" : rest <= 6 ? "중반" : "후반";
