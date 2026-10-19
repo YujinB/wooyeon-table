@@ -6,13 +6,19 @@ import com.wooyeon.table.domain.application.domain.repository.ApplicationReposit
 import com.wooyeon.table.domain.event.application.dto.EventSlotInfo;
 import com.wooyeon.table.domain.event.application.service.EventSlotQueryService;
 import com.wooyeon.table.domain.profile.domain.model.Region;
+import com.wooyeon.table.domain.notification.application.service.NotificationService;
+import com.wooyeon.table.domain.notification.domain.model.NotificationType;
 import com.wooyeon.table.domain.profile.application.service.ProfileQueryService;
 import com.wooyeon.table.global.exception.BusinessException;
 import com.wooyeon.table.global.exception.ErrorCode;
 import java.time.Clock;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -24,9 +30,13 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class ApplicationCommandService {
 
+    private static final DateTimeFormatter DATE = DateTimeFormatter.ofPattern("M/d(E)", Locale.KOREAN);
+    private static final DateTimeFormatter DEADLINE = DateTimeFormatter.ofPattern("M월 d일 HH:mm");
+
     private final ApplicationRepository applicationRepository;
     private final ProfileQueryService profileQueryService;
     private final EventSlotQueryService eventSlotQueryService;
+    private final NotificationService notificationService;
     private final Clock clock;
 
     public Long save(Application application) {
@@ -41,7 +51,7 @@ public class ApplicationCommandService {
         if (!profileQueryService.isCompleteForApplication(userId)) {
             throw new BusinessException(ErrorCode.PROFILE_INCOMPLETE);
         }
-        requireOpenSlots(command.slotIds());
+        List<EventSlotInfo> slots = requireOpenSlots(command.slotIds());
         Set<Long> alreadyApplied = applicationRepository.findAllByUserId(userId).stream()
                 .filter(Application::isActive)
                 .flatMap(application -> application.getPreferredSlotIds().stream())
@@ -49,8 +59,15 @@ public class ApplicationCommandService {
         if (command.slotIds().stream().anyMatch(alreadyApplied::contains)) {
             throw new BusinessException(ErrorCode.DUPLICATE_APPLICATION);
         }
-        return applicationRepository.save(
+        Long applicationId = applicationRepository.save(
                 Application.submit(userId, command.ticketType(), command.regions(), command.slotIds())).getId();
+        notificationService.notifyNow(userId, applicationId, NotificationType.APPLICATION_SUBMITTED, Map.of(
+                        "dates", slots.stream().map(EventSlotInfo::eventDate).sorted()
+                                .map(date -> date.format(DATE)).collect(Collectors.joining(", ")),
+                        "deadline", slots.stream().map(EventSlotInfo::matchAt).min(Comparator.naturalOrder())
+                                .orElseThrow().format(DEADLINE)),
+                "APPLICATION_SUBMITTED:" + applicationId);
+        return applicationId;
     }
 
     public void markPaid(Long applicationId) {
@@ -106,7 +123,7 @@ public class ApplicationCommandService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.APPLICATION_NOT_FOUND, String.valueOf(applicationId)));
     }
 
-    private void requireOpenSlots(Set<Long> slotIds) {
+    private List<EventSlotInfo> requireOpenSlots(Set<Long> slotIds) {
         List<EventSlotInfo> slots = eventSlotQueryService.findSlots(slotIds);
         if (slots.size() != slotIds.size()) {
             throw new BusinessException(ErrorCode.EVENT_SLOT_NOT_FOUND, slotIds.toString());
@@ -118,5 +135,6 @@ public class ApplicationCommandService {
                 .ifPresent(slot -> {
                     throw new BusinessException(ErrorCode.APPLICATION_CLOSED, slot.eventDate().toString());
                 });
+        return slots;
     }
 }

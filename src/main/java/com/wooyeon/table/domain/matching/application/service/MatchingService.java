@@ -7,6 +7,7 @@ import com.wooyeon.table.domain.event.application.dto.EventSlotInfo;
 import com.wooyeon.table.domain.event.application.service.EventSlotCommandService;
 import com.wooyeon.table.domain.event.application.service.EventSlotQueryService;
 import com.wooyeon.table.domain.matching.application.dto.MatchRunSummary;
+import com.wooyeon.table.domain.matching.application.event.MatchCarriedOverEvent;
 import com.wooyeon.table.domain.matching.application.event.MatchFailedEvent;
 import com.wooyeon.table.domain.matching.application.event.TablesConfirmedEvent;
 import com.wooyeon.table.domain.matching.domain.model.Candidate;
@@ -122,6 +123,16 @@ public class MatchingService {
         applicationCommandService.confirmMatch(confirmedApplicationIds(result), slotId);
         applicationCommandService.offerAlternative(
                 alternativeOffered.stream().map(UnassignedCandidate::candidateId).toList());
+        if (!carriedOver.isEmpty()) {
+            eventPublisher.publishEvent(new MatchCarriedOverEvent(slot.eventDate(), carriedOver.stream()
+                    .map(unassigned -> {
+                        MatchCandidateApplication application = applicationById.get(unassigned.candidateId());
+                        return new MatchCarriedOverEvent.CarriedApplication(application.applicationId(),
+                                application.userId(),
+                                laterSlots.get(nextSlotByApplication.get(unassigned.candidateId())).eventDate());
+                    })
+                    .toList()));
+        }
         if (!alternativeOffered.isEmpty()) {
             eventPublisher.publishEvent(new MatchFailedEvent(slot.eventDate(), alternativeOffered.stream()
                     .map(unassigned -> applicationById.get(unassigned.candidateId()))

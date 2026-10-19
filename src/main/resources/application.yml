@@ -31,3 +31,9 @@ auth:
   token-ttl-hours: ${AUTH_TOKEN_TTL_HOURS:168}
   # 데모 계정(admin, demo1~3) 공통 비밀번호
   demo-password: ${DEMO_PASSWORD:wooyeon1234}
+
+notification:
+  dispatcher:
+    # 예약 알림(전날 리마인드)·실패 알림 재시도 발송 주기
+    enabled: ${NOTIFICATION_DISPATCHER_ENABLED:true}
+    interval-ms: ${NOTIFICATION_DISPATCHER_INTERVAL_MS:30000}

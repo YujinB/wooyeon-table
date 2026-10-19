@@ -6,6 +6,8 @@ import com.wooyeon.table.domain.application.application.service.ApplicationQuery
 import com.wooyeon.table.domain.application.domain.model.TicketType;
 import com.wooyeon.table.domain.event.application.dto.EventSlotInfo;
 import com.wooyeon.table.domain.event.application.service.EventSlotQueryService;
+import com.wooyeon.table.domain.notification.application.service.NotificationService;
+import com.wooyeon.table.domain.notification.domain.model.NotificationType;
 import com.wooyeon.table.domain.payment.application.dto.PaymentResult;
 import com.wooyeon.table.domain.payment.domain.model.Membership;
 import com.wooyeon.table.domain.payment.domain.model.PaymentRecord;
@@ -18,11 +20,14 @@ import com.wooyeon.table.domain.payment.domain.service.PaymentGateway;
 import com.wooyeon.table.domain.payment.domain.service.PaymentGateway.GatewayResult;
 import com.wooyeon.table.global.exception.BusinessException;
 import com.wooyeon.table.global.exception.ErrorCode;
+import java.text.DecimalFormat;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -34,6 +39,9 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class PaymentService {
 
+    private static final DecimalFormat WON = new DecimalFormat("#,###");
+    private static final DateTimeFormatter NOTICE_TIME = DateTimeFormatter.ofPattern("M월 d일 HH:mm");
+
     private final ApplicationQueryService applicationQueryService;
     private final ApplicationCommandService applicationCommandService;
     private final EventSlotQueryService eventSlotQueryService;
@@ -41,6 +49,7 @@ public class PaymentService {
     private final MembershipRepository membershipRepository;
     private final TicketCreditRepository ticketCreditRepository;
     private final PaymentGateway paymentGateway;
+    private final NotificationService notificationService;
     private final Clock clock;
 
     /**
@@ -169,8 +178,30 @@ public class PaymentService {
 
     private PaymentResult result(Long applicationId, boolean success, PaymentRecordType type, int amount,
                                  String failureReason, LocalDate membershipExpiresOn) {
-        return new PaymentResult(applicationId, success, type, amount,
-                applicationQueryService.getApplication(applicationId).paymentStatus(), failureReason,
+        ApplicationInfo application = applicationQueryService.getApplication(applicationId);
+        if (success) {
+            notifyResult(application, type, amount);
+        }
+        return new PaymentResult(applicationId, success, type, amount, application.paymentStatus(), failureReason,
                 membershipExpiresOn);
+    }
+
+    /** 결제 완료·환불 완료 알림 (PRD 14절) */
+    private void notifyResult(ApplicationInfo application, PaymentRecordType type, int amount) {
+        if (type == PaymentRecordType.REFUND) {
+            notificationService.notifyNow(application.userId(), application.id(), NotificationType.REFUND_COMPLETED,
+                    Map.of("amount", WON.format(amount)), "REFUND_COMPLETED:" + application.id());
+            return;
+        }
+        String matchAt = eventSlotQueryService.findSlots(application.preferredSlotIds()).stream()
+                .filter(EventSlotInfo::isRecruiting)
+                .map(EventSlotInfo::matchAt)
+                .min(Comparator.naturalOrder())
+                .map(at -> at.format(NOTICE_TIME))
+                .orElse("신청 마감 시각");
+        String ticket = type == PaymentRecordType.CHARGE ? application.ticketType().getLabel() : type.getLabel();
+        notificationService.notifyNow(application.userId(), application.id(), NotificationType.PAYMENT_COMPLETED,
+                Map.of("ticket", ticket, "amount", WON.format(amount), "matchAt", matchAt),
+                "PAYMENT_COMPLETED:" + application.id());
     }
 }

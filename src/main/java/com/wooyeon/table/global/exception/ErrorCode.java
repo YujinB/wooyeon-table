@@ -23,6 +23,7 @@ public enum ErrorCode {
     RESOLUTION_NOT_AVAILABLE(HttpStatus.CONFLICT, "매칭 실패 해결을 고를 수 있는 신청이 아닙니다"),
     DUPLICATE_REQUEST(HttpStatus.CONFLICT, "이미 처리된 요청입니다"),
     DUPLICATE_APPLICATION(HttpStatus.CONFLICT, "이미 신청한 날짜가 있습니다"),
+    CHAT_ROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "단체방을 찾을 수 없습니다"),
     DINING_TABLE_NOT_FOUND(HttpStatus.NOT_FOUND, "테이블을 찾을 수 없습니다"),
     IMPORT_FAILED(HttpStatus.BAD_REQUEST, "신청자 파일을 읽을 수 없습니다"),
     INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 오류가 발생했습니다");
