@@ -118,6 +118,47 @@ public class Application extends BaseTimeEntity {
         }
     }
 
+    /**
+     * 매칭 실패 후 추천 일정으로 이동 (STA-06): 결제는 그대로 두고 새 회차의 매칭 대기로 바꾼다.
+     * 대체 안내 때 환불 가능으로 바뀐 결제 상태는 다시 결제 완료로 돌린다 (새 결제 없음)
+     */
+    public void moveTo(Long slotId, Collection<Region> newRegions) {
+        requireAlternativeOffered();
+        this.preferredSlotIds.clear();
+        this.preferredSlotIds.add(slotId);
+        if (newRegions != null && !newRegions.isEmpty()) {
+            this.regions.clear();
+            this.regions.addAll(newRegions);
+        }
+        this.matchStatus = MatchStatus.WAITING;
+        restorePaid();
+    }
+
+    /** 이용권 보관 (STA-05): 이 신청은 매칭 없이 끝나고 이용권은 다음 신청에 쓴다 */
+    public void keepTicket() {
+        requireAlternativeOffered();
+        this.matchStatus = MatchStatus.NO_MATCH;
+        restorePaid();
+    }
+
+    /** 환불 선택 (PAY-03): 매칭 없이 끝내고, 환불 상태 전환은 결제 쪽이 이어서 한다 */
+    public void closeForRefund() {
+        requireAlternativeOffered();
+        this.matchStatus = MatchStatus.NO_MATCH;
+    }
+
+    private void restorePaid() {
+        if (paymentStatus == PaymentStatus.REFUND_AVAILABLE) {
+            this.paymentStatus = PaymentStatus.PAID;
+        }
+    }
+
+    private void requireAlternativeOffered() {
+        if (matchStatus != MatchStatus.ALTERNATIVE_OFFERED) {
+            throw new BusinessException(ErrorCode.RESOLUTION_NOT_AVAILABLE, id + " (" + matchStatus + ")");
+        }
+    }
+
     /** 모의 결제 성공 (PAY-01). 결제 대기·실패 상태에서만 */
     public void markPaid() {
         requirePayable();

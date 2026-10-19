@@ -7,6 +7,7 @@ import com.wooyeon.table.domain.event.application.dto.EventSlotInfo;
 import com.wooyeon.table.domain.event.application.service.EventSlotCommandService;
 import com.wooyeon.table.domain.event.application.service.EventSlotQueryService;
 import com.wooyeon.table.domain.matching.application.dto.MatchRunSummary;
+import com.wooyeon.table.domain.matching.application.event.MatchFailedEvent;
 import com.wooyeon.table.domain.matching.domain.model.Candidate;
 import com.wooyeon.table.domain.matching.domain.model.DiningTable;
 import com.wooyeon.table.domain.matching.domain.model.MatchFailure;
@@ -37,6 +38,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -61,6 +63,7 @@ public class MatchingService {
     private final ApplicationQueryService applicationQueryService;
     private final ApplicationCommandService applicationCommandService;
     private final ProfileQueryService profileQueryService;
+    private final ApplicationEventPublisher eventPublisher;
     private final Clock clock;
 
     /**
@@ -118,6 +121,13 @@ public class MatchingService {
         applicationCommandService.confirmMatch(confirmedApplicationIds(result), slotId);
         applicationCommandService.offerAlternative(
                 alternativeOffered.stream().map(UnassignedCandidate::candidateId).toList());
+        if (!alternativeOffered.isEmpty()) {
+            eventPublisher.publishEvent(new MatchFailedEvent(slot.eventDate(), alternativeOffered.stream()
+                    .map(unassigned -> applicationById.get(unassigned.candidateId()))
+                    .map(application -> new MatchFailedEvent.FailedApplication(application.applicationId(),
+                            application.userId()))
+                    .toList()));
+        }
         eventSlotCommandService.markMatched(slotId);
 
         log.info("회차 {} 매칭 완료: 후보 {}명, 확정 {}명({}개 테이블), 이월 {}명, 대체 안내 {}명", slot.eventDate(),

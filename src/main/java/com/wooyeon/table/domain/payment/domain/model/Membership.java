@@ -76,6 +76,14 @@ public class Membership extends BaseTimeEntity {
         return !canceled && !eventDate.isBefore(startsOn) && !eventDate.isAfter(expiresOn);
     }
 
+    /** 매칭 실패 1회당 늘리는 기간 (주최 측 Q&A "실패 횟수만큼 기한 연장" → 1회 = 목요일 모임 한 번 = 7일) */
+    public static final int EXTENSION_DAYS_PER_FAILURE = 7;
+
+    public void extendForFailure() {
+        this.expiresOn = expiresOn.plusDays(EXTENSION_DAYS_PER_FAILURE);
+        this.extendedCount++;
+    }
+
     /** 멤버십을 산 신청을 취소·환불하면 멤버십도 끝난다 */
     public void cancel() {
         this.canceled = true;
