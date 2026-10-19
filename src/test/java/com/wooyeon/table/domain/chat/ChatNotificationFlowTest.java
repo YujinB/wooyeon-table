@@ -161,6 +161,30 @@ class ChatNotificationFlowTest {
     }
 
     @Test
+    void 테이블_맞춤_대화_주제와_아이스브레이킹은_멤버가_보고_모임_시작_시각에_단체방에_올라간다() throws Exception {
+        Long slot = eventSlotCommandService.findOrCreate(DATE);
+        List<long[]> members = apply(4, Region.GANGNAM_SINNONHYEON, slot);
+        matchingService.runForSlot(slot);
+        Long tableId = matchingQueryService.findConfirmedTables(slot).get(0).tableId();
+        AdminChatRoomView room = adminChatQueryService.findByTable(tableId);
+
+        mockMvc.perform(get("/api/app/chat-rooms/" + room.roomId() + "/content")
+                        .header(HttpHeaders.AUTHORIZATION, token(members.get(0)[0])))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.topics.length()").value(org.hamcrest.Matchers.greaterThanOrEqualTo(3)))
+                .andExpect(jsonPath("$.data.topics[0].basis").value("모두 '맛집·카페 탐방'을(를) 좋아해요"))
+                .andExpect(jsonPath("$.data.icebreakers[0].name").value("두 개의 진실, 하나의 거짓말"))
+                .andExpect(jsonPath("$.data.icebreakers[1].name").value("MBTI 맞혀 보기"));
+
+        assertThat(room.messages()).filteredOn(message -> message.kind() == ChatMessageKind.CONTENT).singleElement()
+                .satisfies(content -> {
+                    assertThat(content.visible()).isFalse();
+                    assertThat(content.visibleAt()).isEqualTo(DATE.atTime(19, 30));
+                    assertThat(content.content()).contains("[오늘의 대화 주제]", "1. ", "[아이스브레이킹]");
+                });
+    }
+
+    @Test
     void 알림함에는_보낼_시각이_된_알림만_보이고_읽음_처리된다() throws Exception {
         Long slot = eventSlotCommandService.findOrCreate(DATE);
         List<long[]> members = apply(5, Region.EULJIRO_JONGNO, slot);
