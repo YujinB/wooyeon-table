@@ -118,6 +118,64 @@ public class Application extends BaseTimeEntity {
         }
     }
 
+    /** 모의 결제 성공 (PAY-01). 결제 대기·실패 상태에서만 */
+    public void markPaid() {
+        requirePayable();
+        this.paymentStatus = PaymentStatus.PAID;
+    }
+
+    public void markPaymentFailed() {
+        requirePayable();
+        this.paymentStatus = PaymentStatus.FAILED;
+    }
+
+    public boolean isPayable() {
+        return applicationStatus == ApplicationStatus.SUBMITTED
+                && (paymentStatus == PaymentStatus.PENDING || paymentStatus == PaymentStatus.FAILED);
+    }
+
+    /** 매칭 확정 전 신청 취소. 결제했다면 환불은 호출하는 쪽이 이어서 처리한다 */
+    public void cancel() {
+        if (applicationStatus != ApplicationStatus.SUBMITTED || matchStatus != MatchStatus.WAITING) {
+            throw new BusinessException(ErrorCode.CANCEL_NOT_ALLOWED,
+                    "매칭 대기 중인 신청만 취소할 수 있습니다 (" + applicationStatus + "/" + matchStatus + ")");
+        }
+        this.applicationStatus = ApplicationStatus.CANCELED;
+    }
+
+    /** 환불 요청 → 처리 중 → 완료/실패 (PAY-03 모의 상태 전환) */
+    public void requestRefund() {
+        transitPayment(Set.of(PaymentStatus.PAID, PaymentStatus.REFUND_AVAILABLE, PaymentStatus.REFUND_FAILED),
+                PaymentStatus.REFUND_REQUESTED);
+    }
+
+    public void startRefund() {
+        transitPayment(Set.of(PaymentStatus.REFUND_REQUESTED), PaymentStatus.REFUND_PROCESSING);
+    }
+
+    public void completeRefund() {
+        transitPayment(Set.of(PaymentStatus.REFUND_PROCESSING), PaymentStatus.REFUNDED);
+    }
+
+    public void failRefund() {
+        transitPayment(Set.of(PaymentStatus.REFUND_PROCESSING), PaymentStatus.REFUND_FAILED);
+    }
+
+    private void transitPayment(Set<PaymentStatus> from, PaymentStatus to) {
+        if (!from.contains(paymentStatus)) {
+            throw new BusinessException(ErrorCode.INVALID_STATUS_TRANSITION,
+                    "결제 상태 " + paymentStatus + " → " + to + " 불가 (신청 " + id + ")");
+        }
+        this.paymentStatus = to;
+    }
+
+    private void requirePayable() {
+        if (!isPayable()) {
+            throw new BusinessException(ErrorCode.PAYMENT_NOT_ALLOWED,
+                    "결제할 수 없는 상태 (" + applicationStatus + "/" + paymentStatus + ")");
+        }
+    }
+
     private void requireWaiting() {
         if (matchStatus != MatchStatus.WAITING) {
             throw new BusinessException(ErrorCode.INVALID_STATUS_TRANSITION,
