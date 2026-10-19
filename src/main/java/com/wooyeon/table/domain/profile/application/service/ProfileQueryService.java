@@ -1,10 +1,12 @@
 package com.wooyeon.table.domain.profile.application.service;
 
 import com.wooyeon.table.domain.profile.application.dto.MatchingProfile;
+import com.wooyeon.table.domain.profile.domain.model.MealBudget;
 import com.wooyeon.table.domain.profile.domain.model.Profile;
 import com.wooyeon.table.domain.profile.domain.repository.ProfileRepository;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +19,15 @@ import org.springframework.transaction.annotation.Transactional;
 public class ProfileQueryService {
 
     private final ProfileRepository profileRepository;
+
+    /** 사용자 id → 희망 식사 예산 (식당 가격대 고르기용) */
+    public Map<Long, Set<MealBudget>> findMealBudgets(Collection<Long> userIds) {
+        if (userIds.isEmpty()) {
+            return Map.of();
+        }
+        return profileRepository.findAllByUserIdIn(userIds).stream()
+                .collect(Collectors.toMap(Profile::getUserId, profile -> Set.copyOf(profile.getMealBudgets())));
+    }
 
     /** 신청할 수 있을 만큼 프로필을 채웠는지 (APP-03 필수 항목 확인) */
     public boolean isCompleteForApplication(Long userId) {
