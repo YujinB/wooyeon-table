@@ -14,6 +14,10 @@ public record EventSlotInfo(Long id, LocalDate eventDate, LocalTime startTime, L
                 slot.getStatus());
     }
 
+    public boolean isOpenForApplication(LocalDateTime now) {
+        return isRecruiting() && now.isBefore(matchAt);
+    }
+
     public boolean isRecruiting() {
         return status == EventSlotStatus.RECRUITING;
     }
