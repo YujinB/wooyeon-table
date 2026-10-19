@@ -37,3 +37,9 @@ notification:
     # 예약 알림(전날 리마인드)·실패 알림 재시도 발송 주기
     enabled: ${NOTIFICATION_DISPATCHER_ENABLED:true}
     interval-ms: ${NOTIFICATION_DISPATCHER_INTERVAL_MS:30000}
+
+attendance:
+  # 체크인은 모임 시작 이 시간 전부터 연다
+  check-in-opens-hours-before: 2
+  # 데모용: 모임 당일이 아니어도 확정 직후부터 체크인 허용 (실제 운영은 false)
+  check-in-anytime: ${ATTENDANCE_CHECK_IN_ANYTIME:true}
