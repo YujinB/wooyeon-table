@@ -136,6 +136,7 @@ button { font-family: inherit; }
   color: var(--brand-strong);
   font-size: 13px;
   font-weight: 500;
+  white-space: nowrap;
 }
 .pill.ok { background: #e1efe4; color: var(--ok); }
 .pill.warn { background: #f8ecd4; color: var(--warn); }

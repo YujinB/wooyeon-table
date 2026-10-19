@@ -44,8 +44,8 @@ export default function SlotPage() {
           <div className="crumb"><Link to="/admin">대시보드</Link> ›</div>
           <h1 className="h1">{day(r.eventDate)} 회차</h1>
           <p className="muted" style={{ margin: 0 }}>
-            <span className={`pill ${slotStatusView(r.slotStatus, r.matchAt).tone}`}>
-              {slotStatusView(r.slotStatus, r.matchAt).label}
+            <span className={`pill ${slotStatusView(r.slotStatus, r.matchAt, r.eventDate).tone}`}>
+              {slotStatusView(r.slotStatus, r.matchAt, r.eventDate).label}
             </span> 매칭 마감 {dateTime(r.matchAt)}
           </p>
         </div>

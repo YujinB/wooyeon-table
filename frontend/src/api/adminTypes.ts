@@ -8,10 +8,22 @@ export const SLOT_STATUS_LABEL: Record<SlotStatus, string> = {
   COMPLETED: '행사 종료',
 };
 
-/** 마감 시각이 지났는데 아직 매칭을 돌리지 않은 회차는 "모집 중"이 아니라 마감 지남으로 보여 준다 */
-export function slotStatusView(status: SlotStatus, matchAt: string): { label: string; tone: string } {
+/** 행사 시작 시각 (startTime이 없으면 19:30) */
+export function slotStartsAt(eventDate: string, startTime = '19:30:00'): number {
+  return new Date(`${eventDate}T${startTime}`).getTime();
+}
+
+/**
+ * 저장된 상태에 시각을 더해 보여 준다: 마감이 지났는데 매칭 전이면 "마감 지남",
+ * 행사일이 지났는데 종료 처리 전이면 "행사일 지남"
+ */
+export function slotStatusView(status: SlotStatus, matchAt: string, eventDate: string,
+  startTime?: string): { label: string; tone: string } {
   if (status === 'RECRUITING' && new Date(matchAt).getTime() <= Date.now()) {
     return { label: '마감 지남 · 매칭 전', tone: 'warn' };
+  }
+  if (status === 'MATCHED' && slotStartsAt(eventDate, startTime) <= Date.now()) {
+    return { label: '행사일 지남 · 종료 처리 전', tone: 'gray' };
   }
   return { label: SLOT_STATUS_LABEL[status], tone: { RECRUITING: '', MATCHED: 'ok', COMPLETED: 'gray' }[status] };
 }
