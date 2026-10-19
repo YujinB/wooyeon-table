@@ -4,6 +4,7 @@ import com.wooyeon.table.domain.application.application.dto.ApplicationInfo;
 import com.wooyeon.table.domain.application.application.dto.MatchCandidateApplication;
 import com.wooyeon.table.domain.application.domain.model.Application;
 import com.wooyeon.table.domain.application.domain.model.MatchStatus;
+import com.wooyeon.table.domain.application.domain.model.PaymentStatus;
 import com.wooyeon.table.domain.application.domain.repository.ApplicationRepository;
 import com.wooyeon.table.domain.profile.domain.model.Region;
 import com.wooyeon.table.global.exception.BusinessException;
@@ -63,6 +64,15 @@ public class ApplicationQueryService {
             throw new BusinessException(ErrorCode.APPLICATION_NOT_FOUND, String.valueOf(applicationId));
         }
         return application;
+    }
+
+    /** 신청 완료 이후의 모든 신청 (운영 현황 집계용, 최근 것부터) */
+    public List<ApplicationInfo> findAllSubmitted() {
+        return applicationRepository.findAllSubmitted().stream().map(ApplicationInfo::from).toList();
+    }
+
+    public List<ApplicationInfo> findByPaymentStatus(PaymentStatus paymentStatus) {
+        return applicationRepository.findAllByPaymentStatus(paymentStatus).stream().map(ApplicationInfo::from).toList();
     }
 
     public ApplicationInfo getApplication(Long applicationId) {

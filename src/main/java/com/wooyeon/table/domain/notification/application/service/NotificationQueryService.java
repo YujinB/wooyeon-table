@@ -1,7 +1,9 @@
 package com.wooyeon.table.domain.notification.application.service;
 
 import com.wooyeon.table.domain.notification.application.dto.MyNotifications;
+import com.wooyeon.table.domain.notification.application.dto.NotificationFailure;
 import com.wooyeon.table.domain.notification.application.dto.NotificationItem;
+import com.wooyeon.table.domain.notification.domain.model.NotificationStatus;
 import com.wooyeon.table.domain.notification.domain.model.Notification;
 import com.wooyeon.table.domain.notification.domain.repository.NotificationRepository;
 import com.wooyeon.table.global.exception.BusinessException;
@@ -29,6 +31,14 @@ public class NotificationQueryService {
                 .map(NotificationItem::from)
                 .toList();
         return new MyNotifications(items.stream().filter(item -> !item.read()).count(), items);
+    }
+
+    /** 재시도까지 모두 실패한 알림 (운영자 예외 처리함) */
+    @Transactional(readOnly = true)
+    public List<NotificationFailure> findGaveUp() {
+        return notificationRepository.findAllByStatus(NotificationStatus.GAVE_UP).stream()
+                .map(NotificationFailure::from)
+                .toList();
     }
 
     public void markRead(Long userId, Long notificationId) {

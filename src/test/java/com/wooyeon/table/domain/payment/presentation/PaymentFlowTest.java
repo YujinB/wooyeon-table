@@ -144,7 +144,7 @@ class PaymentFlowTest {
     }
 
     @Test
-    void 환불이_실패하면_REFUND_FAILED로_남고_환불_규정을_조회할_수_있다() throws Exception {
+    void 환불이_실패하면_REFUND_FAILED로_예외_처리함에_올라가고_운영자가_다시_환불할_수_있다() throws Exception {
         String token = loginWithProfile("demo1");
         long applicationId = submit(token, "SINGLE",
                 eventSlotCommandService.findOrCreate(LocalDate.now().plusDays(23)));
@@ -153,6 +153,18 @@ class PaymentFlowTest {
         assertThat(paymentService.refund(applicationId, true).success()).isFalse();
         assertThat(applicationQueryService.getApplication(applicationId).paymentStatus())
                 .isEqualTo(PaymentStatus.REFUND_FAILED);
+
+        String admin = login("admin");
+        String refundItem = "$.data[?(@.type == 'REFUND' && @.refId == " + applicationId + ")]";
+        mockMvc.perform(authed(get("/api/admin/exceptions"), admin))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath(refundItem).exists());
+        mockMvc.perform(authed(post("/api/admin/applications/" + applicationId + "/refund/retry"), admin))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.success").value(true))
+                .andExpect(jsonPath("$.data.paymentStatus").value("REFUNDED"));
+        mockMvc.perform(authed(get("/api/admin/exceptions"), admin))
+                .andExpect(jsonPath(refundItem).doesNotExist());
 
         mockMvc.perform(authed(get("/api/app/policies/refund"), token))
                 .andExpect(status().isOk())
@@ -194,11 +206,15 @@ class PaymentFlowTest {
         return mockMvc.perform(authed(get("/api/app/applications/" + applicationId), token));
     }
 
-    private String loginWithProfile(String loginId) throws Exception {
+    private String login(String loginId) throws Exception {
         JsonNode login = body(mockMvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
                         .content(json(Map.of("loginId", loginId, "password", PASSWORD))))
                 .andExpect(status().isOk()));
-        String token = login.at("/data/token").asText();
+        return login.at("/data/token").asText();
+    }
+
+    private String loginWithProfile(String loginId) throws Exception {
+        String token = login(loginId);
         mockMvc.perform(authed(put("/api/app/me/profile"), token).contentType(MediaType.APPLICATION_JSON)
                         .content(json(Map.of("name", "체험", "phone", "01012345678", "birthYear", 1995,
                                 "gender", "MALE", "interests", List.of("MUSIC"), "traits", List.of("CALM"),

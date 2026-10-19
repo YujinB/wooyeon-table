@@ -1,6 +1,7 @@
 package com.wooyeon.table.domain.application.domain.repository;
 
 import com.wooyeon.table.domain.application.domain.model.Application;
+import com.wooyeon.table.domain.application.domain.model.PaymentStatus;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -17,6 +18,11 @@ public interface ApplicationRepository {
     List<Application> findMatchCandidates(Long slotId);
 
     boolean existsByUserId(Long userId);
+
+    /** 신청 완료 이후의 모든 신청 (운영 현황 집계용) */
+    List<Application> findAllSubmitted();
+
+    List<Application> findAllByPaymentStatus(PaymentStatus paymentStatus);
 
     /** 사용자의 신청 (최근 것부터) */
     List<Application> findAllByUserId(Long userId);
