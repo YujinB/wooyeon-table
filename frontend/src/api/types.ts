@@ -257,3 +257,10 @@ export const REPORT_REASONS = [
   { code: 'SOLICITATION', label: '영업·종교·다단계 권유' },
   { code: 'OTHER', label: '기타' },
 ];
+
+export interface MyConsent {
+  agreed: boolean;
+  version: string;
+  agreedAt: string | null;
+  sections: { key: 'privacy' | 'policy'; title: string; items: string[] }[];
+}

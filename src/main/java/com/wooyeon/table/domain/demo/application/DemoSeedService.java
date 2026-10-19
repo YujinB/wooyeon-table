@@ -123,8 +123,10 @@ public class DemoSeedService {
         List<Long> demoUsers = demoLoginIds.stream()
                 .map(loginId -> userCommandService.createParticipantIfAbsent(loginId, loginId))
                 .toList();
+        // 체험참가자1~3은 프로필 작성·동의까지 끝낸 상태 (바로 신청), 4~5는 처음부터
         for (int i = 0; i < Math.min(3, demoUsers.size()); i++) {
             profileCommandService.createIfAbsent(demoProfile(demoUsers.get(i), i));
+            userCommandService.agree(demoUsers.get(i));
         }
 
         LocalDate today = LocalDate.now(clock);

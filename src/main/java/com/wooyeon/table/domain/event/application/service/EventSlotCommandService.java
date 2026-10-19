@@ -9,7 +9,9 @@ import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import com.wooyeon.table.domain.event.application.dto.SlotOpenedEvent;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +23,7 @@ public class EventSlotCommandService {
 
     private final EventSlotRepository eventSlotRepository;
     private final Clock clock;
+    private final ApplicationEventPublisher eventPublisher;
 
     /**
      * 운영자 회차 생성. 시작 시각·신청 마감을 비우면 기본값(19:30 시작, 전날 0시 마감)
@@ -35,7 +38,9 @@ public class EventSlotCommandService {
         EventSlot slot = EventSlot.of(eventDate,
                 startTime == null ? EventSlot.DEFAULT_START_TIME : startTime,
                 matchAt == null ? EventSlot.refundClosesAt(eventDate) : matchAt);
-        return eventSlotRepository.save(slot).getId();
+        Long slotId = eventSlotRepository.save(slot).getId();
+        eventPublisher.publishEvent(new SlotOpenedEvent(slotId));
+        return slotId;
     }
 
     /** 그 날짜 회차가 없으면 기본 일정(19:30 시작, 전날 0시 마감·매칭)으로 만든다 */

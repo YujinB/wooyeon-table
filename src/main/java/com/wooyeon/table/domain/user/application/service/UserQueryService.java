@@ -1,6 +1,8 @@
 package com.wooyeon.table.domain.user.application.service;
 
+import com.wooyeon.table.domain.user.application.dto.MyConsent;
 import com.wooyeon.table.domain.user.application.dto.UserInfo;
+import com.wooyeon.table.domain.user.domain.model.ConsentPolicy;
 import com.wooyeon.table.domain.user.domain.model.User;
 import com.wooyeon.table.domain.user.domain.repository.UserRepository;
 import com.wooyeon.table.global.exception.BusinessException;
@@ -18,6 +20,19 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserQueryService {
 
     private final UserRepository userRepository;
+
+    /** 지금 정책 버전에 동의했는지 (ACC-05) */
+    public boolean hasConsented(Long userId) {
+        return userRepository.findById(userId).map(user -> user.hasConsented(ConsentPolicy.VERSION)).orElse(false);
+    }
+
+    public MyConsent myConsent(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND, String.valueOf(userId)));
+        boolean agreed = user.hasConsented(ConsentPolicy.VERSION);
+        return new MyConsent(agreed, ConsentPolicy.VERSION, agreed ? user.getConsentedAt() : null,
+                ConsentPolicy.SECTIONS);
+    }
 
     public boolean existsByLoginId(String loginId) {
         return userRepository.findByLoginId(loginId).isPresent();

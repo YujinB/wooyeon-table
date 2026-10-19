@@ -28,7 +28,11 @@ public enum NotificationType {
     FEEDBACK_REQUESTED("오늘 모임은 어떠셨나요?",
             "{date} 모임 후기를 남겨 주세요. 테이블·대화·식당 만족도와 다시 만나고 싶은 분을 고르면 다음 매칭에 반영돼요. 불편한 일이 있었다면 신고도 할 수 있어요."),
     EVENT_REMINDER("내일 모임이 있어요",
-            "내일 {time} {venue}에서 만나요. 주소: {address}. 예약명: {reservationName}. {policy}");
+            "내일 {time} {venue}에서 만나요. 주소: {address}. 예약명: {reservationName}. {policy}"),
+    FEEDBACK_REMINDER("후기를 기다리고 있어요",
+            "{date} 모임 후기를 아직 남기지 않으셨어요. 1분이면 끝나고 다음 매칭에 반영돼요. 이 안내는 한 번만 보내요."),
+    NEXT_SLOT_OPENED("새 모임 일정이 열렸어요",
+            "{date} {time} 모임 신청을 받고 있어요. {reason} 이번에도 {region}에서 만나 보실래요? 신청 마감은 {deadline}이에요.");
 
     private final String title;
     private final String template;

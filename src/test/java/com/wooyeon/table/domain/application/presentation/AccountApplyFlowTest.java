@@ -103,10 +103,25 @@ class AccountApplyFlowTest {
     }
 
     @Test
-    void 신청은_프로필_필수_항목_마감_날짜_중복을_확인하고_결제_대기로_저장된다() throws Exception {
+    void 신청은_동의_프로필_필수_항목_마감_날짜_중복을_확인하고_결제_대기로_저장된다() throws Exception {
         String token = login("demo1");
         Long open = eventSlotCommandService.findOrCreate(LocalDate.now().plusDays(401));
         Long closed = eventSlotCommandService.findOrCreate(LocalDate.now().plusDays(1));
+
+        // 개인정보·운영 정책 동의 전에는 신청 불가 (ACC-05), 둘 다 동의해야 저장
+        apply(token, "SINGLE", open)
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.code").value("CONSENT_REQUIRED"));
+        mockMvc.perform(authed(get("/api/app/me/consent"), token))
+                .andExpect(jsonPath("$.data.agreed").value(false))
+                .andExpect(jsonPath("$.data.sections.length()").value(2));
+        mockMvc.perform(authed(post("/api/app/me/consent"), token).contentType(MediaType.APPLICATION_JSON)
+                        .content(json(Map.of("privacy", true, "policy", false))))
+                .andExpect(status().isBadRequest());
+        agree(token);
+        mockMvc.perform(authed(get("/api/app/me/consent"), token))
+                .andExpect(jsonPath("$.data.agreed").value(true))
+                .andExpect(jsonPath("$.data.agreedAt").exists());
 
         apply(token, "SINGLE", open)
                 .andExpect(status().isBadRequest())
@@ -174,6 +189,13 @@ class AccountApplyFlowTest {
     private void saveProfile(String token) throws Exception {
         mockMvc.perform(authed(put("/api/app/me/profile"), token).contentType(MediaType.APPLICATION_JSON)
                         .content(json(profileBody())))
+                .andExpect(status().isOk());
+        agree(token);
+    }
+
+    private void agree(String token) throws Exception {
+        mockMvc.perform(authed(post("/api/app/me/consent"), token).contentType(MediaType.APPLICATION_JSON)
+                        .content(json(Map.of("privacy", true, "policy", true))))
                 .andExpect(status().isOk());
     }
 

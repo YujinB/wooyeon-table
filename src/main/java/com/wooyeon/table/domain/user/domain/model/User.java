@@ -9,6 +9,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -41,6 +42,12 @@ public class User extends BaseTimeEntity {
     @Column(length = 100)
     private String passwordHash;
 
+    /** 동의한 개인정보·운영 정책 버전과 시각 (ACC-05). 정책 버전이 바뀌면 다시 동의받는다 */
+    @Column(length = 20)
+    private String consentVersion;
+
+    private LocalDateTime consentedAt;
+
     private User(String loginId, String name, UserRole role) {
         this.loginId = loginId;
         this.name = name;
@@ -63,6 +70,15 @@ public class User extends BaseTimeEntity {
 
     public void changePasswordHash(String passwordHash) {
         this.passwordHash = passwordHash;
+    }
+
+    public void agree(String version, LocalDateTime at) {
+        this.consentVersion = version;
+        this.consentedAt = at;
+    }
+
+    public boolean hasConsented(String currentVersion) {
+        return currentVersion.equals(consentVersion);
     }
 
     public boolean canLogin() {

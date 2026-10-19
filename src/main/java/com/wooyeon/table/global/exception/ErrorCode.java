@@ -17,6 +17,7 @@ public enum ErrorCode {
     EVENT_SLOT_ALREADY_EXISTS(HttpStatus.CONFLICT, "그 날짜에 이미 회차가 있습니다"),
     INVALID_STATUS_TRANSITION(HttpStatus.CONFLICT, "현재 상태에서는 처리할 수 없습니다"),
     APPLICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "신청을 찾을 수 없습니다"),
+    CONSENT_REQUIRED(HttpStatus.BAD_REQUEST, "개인정보 수집·이용과 운영 정책에 동의해야 신청할 수 있어요"),
     PROFILE_INCOMPLETE(HttpStatus.BAD_REQUEST, "신청 전에 프로필(관심사·성향·희망 성향·식사 예산)을 채워 주세요"),
     APPLICATION_CLOSED(HttpStatus.CONFLICT, "신청이 마감된 회차입니다"),
     PAYMENT_NOT_ALLOWED(HttpStatus.CONFLICT, "결제할 수 없는 신청입니다"),

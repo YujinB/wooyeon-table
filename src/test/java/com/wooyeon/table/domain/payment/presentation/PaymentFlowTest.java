@@ -220,6 +220,9 @@ class PaymentFlowTest {
                                 "gender", "MALE", "interests", List.of("MUSIC"), "traits", List.of("CALM"),
                                 "preferredTraits", List.of("STABLE"), "mealBudgets", List.of("OVER_30K")))))
                 .andExpect(status().isOk());
+        mockMvc.perform(authed(post("/api/app/me/consent"), token).contentType(MediaType.APPLICATION_JSON)
+                        .content(json(Map.of("privacy", true, "policy", true))))
+                .andExpect(status().isOk());
         return token;
     }
 
