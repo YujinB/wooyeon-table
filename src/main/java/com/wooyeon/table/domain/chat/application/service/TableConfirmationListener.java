@@ -1,5 +1,6 @@
 package com.wooyeon.table.domain.chat.application.service;
 
+import com.wooyeon.table.domain.chat.domain.model.ChatRoom;
 import com.wooyeon.table.domain.matching.application.event.TablesConfirmedEvent;
 import com.wooyeon.table.domain.venue.application.event.VenueAssignedEvent;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +29,9 @@ public class TableConfirmationListener {
     @EventListener
     @Order(ORDER)
     public void onTablesConfirmed(TablesConfirmedEvent event) {
-        chatRoomService.openForSlot(event.slotId()).forEach(chatNoticeService::postConfirmationNotices);
+        for (ChatRoom room : chatRoomService.openForSlot(event.slotId())) {
+            chatNoticeService.postConfirmationNotices(room);
+            chatNoticeService.notifyConfirmed(room);
+        }
     }
 }

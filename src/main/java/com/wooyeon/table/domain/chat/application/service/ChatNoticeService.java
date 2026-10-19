@@ -1,5 +1,6 @@
 package com.wooyeon.table.domain.chat.application.service;
 
+import com.wooyeon.table.domain.chat.domain.model.ChatMember;
 import com.wooyeon.table.domain.chat.domain.model.ChatMessage;
 import com.wooyeon.table.domain.chat.domain.model.ChatMessageKind;
 import com.wooyeon.table.domain.chat.domain.model.ChatRoom;
@@ -10,6 +11,8 @@ import com.wooyeon.table.domain.event.application.dto.EventSlotInfo;
 import com.wooyeon.table.domain.event.application.service.EventSlotQueryService;
 import com.wooyeon.table.domain.matching.application.dto.TableDetail;
 import com.wooyeon.table.domain.matching.application.service.MatchingQueryService;
+import com.wooyeon.table.domain.notification.application.service.NotificationService;
+import com.wooyeon.table.domain.notification.domain.model.NotificationType;
 import com.wooyeon.table.domain.payment.domain.model.RefundPolicy;
 import com.wooyeon.table.domain.venue.application.dto.VenueAssignmentView;
 import com.wooyeon.table.domain.venue.application.service.VenueQueryService;
@@ -19,6 +22,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -41,6 +45,7 @@ public class ChatNoticeService {
     private final MatchingQueryService matchingQueryService;
     private final EventSlotQueryService eventSlotQueryService;
     private final VenueQueryService venueQueryService;
+    private final NotificationService notificationService;
     private final Clock clock;
 
     public void postConfirmationNotices(ChatRoom room) {
@@ -52,6 +57,24 @@ public class ChatNoticeService {
         venue.ifPresent(assigned -> post(room, ChatMessageKind.PLACE, place(room, assigned), now));
         post(room, ChatMessageKind.CURATION, curation(table), now);
         post(room, ChatMessageKind.POLICY, policy(), now);
+    }
+
+    /** 매칭 확정 알림: 날짜·지역·식당·집합 시간·앱 단체방 안내 (INF-01, PRD 14절) */
+    public void notifyConfirmed(ChatRoom room) {
+        EventSlotInfo slot = eventSlotQueryService.getSlot(room.getSlotId());
+        TableDetail table = matchingQueryService.getTableDetail(room.getTableId());
+        String venue = assignedVenue(room.getTableId())
+                .map(assigned -> assigned.venue().name())
+                .orElse("배정 중 (정해지면 단체방에 안내)");
+        for (ChatMember member : room.getMembers()) {
+            notificationService.notifyNow(member.getUserId(), member.getApplicationId(),
+                    NotificationType.MATCH_CONFIRMED, Map.of(
+                            "date", slot.eventDate().format(DATE),
+                            "time", slot.startTime().format(TIME),
+                            "region", table.regionLabel(),
+                            "venue", venue),
+                    "MATCH_CONFIRMED:" + member.getApplicationId());
+        }
     }
 
     /** 식당이 늦게(운영자 재시도로) 배정된 테이블에 시간·장소 공지를 올린다 */

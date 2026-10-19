@@ -3,6 +3,8 @@ package com.wooyeon.table.domain.resolution.application.service;
 import com.wooyeon.table.domain.application.application.dto.ApplicationInfo;
 import com.wooyeon.table.domain.application.application.service.ApplicationCommandService;
 import com.wooyeon.table.domain.application.application.service.ApplicationQueryService;
+import com.wooyeon.table.domain.notification.application.service.NotificationService;
+import com.wooyeon.table.domain.notification.domain.model.NotificationType;
 import com.wooyeon.table.domain.payment.application.dto.PaymentResult;
 import com.wooyeon.table.domain.payment.application.service.PaymentService;
 import com.wooyeon.table.domain.profile.domain.model.Region;
@@ -14,6 +16,9 @@ import com.wooyeon.table.domain.resolution.domain.repository.ResolutionRepositor
 import com.wooyeon.table.global.exception.BusinessException;
 import com.wooyeon.table.global.exception.ErrorCode;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -28,11 +33,15 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class ResolutionService {
 
+    private static final DateTimeFormatter DATE = DateTimeFormatter.ofPattern("M/d(E)", Locale.KOREAN);
+    private static final DateTimeFormatter MATCH_AT = DateTimeFormatter.ofPattern("M월 d일 HH:mm");
+
     private final ResolutionQueryService resolutionQueryService;
     private final ResolutionRepository resolutionRepository;
     private final ApplicationQueryService applicationQueryService;
     private final ApplicationCommandService applicationCommandService;
     private final PaymentService paymentService;
+    private final NotificationService notificationService;
 
     public ResolutionResult resolve(Long userId, Long applicationId, ResolutionChoice choice, Long slotId,
                                     Set<Region> regions) {
@@ -75,6 +84,9 @@ public class ResolutionService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.APPLICATION_CLOSED,
                         "옮겨 갈 수 없는 회차: " + slotId));
         applicationCommandService.moveTo(application.id(), slotId, regions);
+        notificationService.notifyNow(application.userId(), application.id(), NotificationType.SCHEDULE_MOVED,
+                Map.of("date", target.eventDate().format(DATE), "matchAt", target.applyDeadline().format(MATCH_AT)),
+                "SCHEDULE_MOVED:" + application.id() + ":" + slotId);
         return target.eventDate();
     }
 }
