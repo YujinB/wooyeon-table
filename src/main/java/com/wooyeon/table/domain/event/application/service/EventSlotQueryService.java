@@ -31,6 +31,15 @@ public class EventSlotQueryService {
         return eventSlotRepository.findAllByIdIn(slotIds).stream().map(EventSlotInfo::from).toList();
     }
 
+    /** 참가자가 지금 신청할 수 있는 회차 (APP-01) */
+    public List<EventSlotInfo> findOpenSlots(LocalDateTime now) {
+        return eventSlotRepository.findOpenForApplication(now).stream().map(EventSlotInfo::from).toList();
+    }
+
+    public List<EventSlotInfo> findAllSlots() {
+        return eventSlotRepository.findAllLatestFirst().stream().map(EventSlotInfo::from).toList();
+    }
+
     public List<Long> findSlotIdsDueForMatching(LocalDateTime now) {
         return eventSlotRepository.findDueForMatching(now).stream().map(slot -> slot.getId()).toList();
     }

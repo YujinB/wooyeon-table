@@ -17,4 +17,7 @@ public interface ApplicationRepository {
     List<Application> findMatchCandidates(Long slotId);
 
     boolean existsByUserId(Long userId);
+
+    /** 사용자의 신청 (최근 것부터) */
+    List<Application> findAllByUserId(Long userId);
 }

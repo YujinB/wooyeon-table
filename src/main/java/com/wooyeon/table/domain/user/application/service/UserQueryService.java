@@ -1,7 +1,10 @@
 package com.wooyeon.table.domain.user.application.service;
 
+import com.wooyeon.table.domain.user.application.dto.UserInfo;
 import com.wooyeon.table.domain.user.domain.model.User;
 import com.wooyeon.table.domain.user.domain.repository.UserRepository;
+import com.wooyeon.table.global.exception.BusinessException;
+import com.wooyeon.table.global.exception.ErrorCode;
 import java.util.Collection;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -15,6 +18,12 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserQueryService {
 
     private final UserRepository userRepository;
+
+    public UserInfo getUser(Long userId) {
+        return userRepository.findById(userId)
+                .map(UserInfo::from)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND, String.valueOf(userId)));
+    }
 
     /** 사용자 id → 이름 (운영자 화면 표시용) */
     public Map<Long, String> findNames(Collection<Long> userIds) {

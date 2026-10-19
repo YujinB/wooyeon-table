@@ -22,6 +22,10 @@ public interface EventSlotJpaRepository extends JpaRepository<EventSlot, Long> {
 
     List<EventSlot> findAllByIdIn(Collection<Long> ids);
 
+    List<EventSlot> findAllByStatusAndMatchAtAfterOrderByEventDateAsc(EventSlotStatus status, LocalDateTime now);
+
+    List<EventSlot> findAllByOrderByEventDateDesc();
+
     List<EventSlot> findAllByStatusAndMatchAtLessThanEqualOrderByEventDateAsc(EventSlotStatus status,
                                                                              LocalDateTime now);
 }

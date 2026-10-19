@@ -20,6 +20,12 @@ public interface EventSlotRepository {
 
     List<EventSlot> findAllByIdIn(Collection<Long> ids);
 
+    /** 모집 중이고 신청 마감 전인 회차 (날짜순) */
+    List<EventSlot> findOpenForApplication(LocalDateTime now);
+
+    /** 전체 회차 (최근 날짜부터) */
+    List<EventSlot> findAllLatestFirst();
+
     /** 매칭 실행 시각이 지났는데 아직 모집 중인 회차 (날짜순) */
     List<EventSlot> findDueForMatching(LocalDateTime now);
 }

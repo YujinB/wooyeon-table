@@ -41,7 +41,7 @@ public class Application extends BaseTimeEntity {
     private Long userId;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 10)
+    @Column(nullable = false, length = 20)
     private TicketType ticketType;
 
     @ElementCollection
@@ -82,6 +82,16 @@ public class Application extends BaseTimeEntity {
         this.applicationStatus = ApplicationStatus.SUBMITTED;
         this.paymentStatus = paymentStatus;
         this.matchStatus = MatchStatus.WAITING;
+    }
+
+    /** 참가자 신청 제출 (APP-03): 신청 완료·결제 대기. 결제는 W2-2 모의 결제에서 */
+    public static Application submit(Long userId, TicketType ticketType, Collection<Region> regions,
+                                     Collection<Long> preferredSlotIds) {
+        return new Application(userId, ticketType, regions, preferredSlotIds, PaymentStatus.PENDING);
+    }
+
+    public boolean isActive() {
+        return applicationStatus != ApplicationStatus.CANCELED;
     }
 
     /** 기존 신청자 데이터 적재용: 신청 완료·모의 결제 완료 상태로 만든다 */

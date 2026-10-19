@@ -39,6 +39,11 @@ public class ApplicationRepositoryImpl implements ApplicationRepository {
     }
 
     @Override
+    public List<Application> findAllByUserId(Long userId) {
+        return jpaRepository.findAllByUserIdOrderByIdDesc(userId);
+    }
+
+    @Override
     public boolean existsByUserId(Long userId) {
         return jpaRepository.existsByUserId(userId);
     }

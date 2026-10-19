@@ -29,9 +29,11 @@ import lombok.NoArgsConstructor;
 public class EventSlot extends BaseTimeEntity {
 
     public static final LocalTime DEFAULT_START_TIME = LocalTime.of(19, 30);
-    /** 진행 2일 전부터 환불이 제한되므로(PAY-02) 그 전에 매칭 결과가 나오도록 한다 */
-    public static final int DEFAULT_MATCH_DAYS_BEFORE = 2;
-    public static final LocalTime DEFAULT_MATCH_TIME = LocalTime.NOON;
+    /**
+     * 환불 불가 시점 = 행사 전날 0시 (목요일 행사 → 화요일 24:00, 주최 측 Q&A·PAY-02).
+     * 신청 마감·자동 매칭도 기본적으로 이 시각에 한다 — 환불이 막히기 직전까지 신청을 받고, 마감하자마자 결과를 알린다
+     */
+    public static final int REFUND_CLOSE_DAYS_BEFORE = 1;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -59,8 +61,7 @@ public class EventSlot extends BaseTimeEntity {
     }
 
     public static EventSlot withDefaultSchedule(LocalDate eventDate) {
-        return new EventSlot(eventDate, DEFAULT_START_TIME,
-                eventDate.minusDays(DEFAULT_MATCH_DAYS_BEFORE).atTime(DEFAULT_MATCH_TIME));
+        return new EventSlot(eventDate, DEFAULT_START_TIME, refundClosesAt(eventDate));
     }
 
     public static EventSlot of(LocalDate eventDate, LocalTime startTime, LocalDateTime matchAt) {
@@ -70,8 +71,17 @@ public class EventSlot extends BaseTimeEntity {
         return new EventSlot(eventDate, startTime, matchAt);
     }
 
+    public static LocalDateTime refundClosesAt(LocalDate eventDate) {
+        return eventDate.minusDays(REFUND_CLOSE_DAYS_BEFORE).atStartOfDay();
+    }
+
     public boolean isRecruiting() {
         return status == EventSlotStatus.RECRUITING;
+    }
+
+    /** 모집 중이고 신청 마감(매칭 실행 시각) 전 */
+    public boolean isOpenForApplication(LocalDateTime now) {
+        return isRecruiting() && now.isBefore(matchAt);
     }
 
     public void markMatched() {
