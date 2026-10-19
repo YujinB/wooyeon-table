@@ -25,6 +25,8 @@ public enum NotificationType {
             "{date} 회차 매칭 대기로 옮겼어요. 결제는 그대로 유지되고 {matchAt}에 자동 매칭돼요."),
     REFUND_COMPLETED("환불이 완료됐어요",
             "{amount}원이 결제수단으로 환불됐어요."),
+    FEEDBACK_REQUESTED("오늘 모임은 어떠셨나요?",
+            "{date} 모임 후기를 남겨 주세요. 테이블·대화·식당 만족도와 다시 만나고 싶은 분을 고르면 다음 매칭에 반영돼요. 불편한 일이 있었다면 신고도 할 수 있어요."),
     EVENT_REMINDER("내일 모임이 있어요",
             "내일 {time} {venue}에서 만나요. 주소: {address}. 예약명: {reservationName}. {policy}");
 
