@@ -41,7 +41,7 @@ public class Application extends BaseTimeEntity {
     private Long userId;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 10)
+    @Column(nullable = false, length = 20)
     private TicketType ticketType;
 
     @ElementCollection
