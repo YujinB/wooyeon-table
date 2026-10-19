@@ -90,7 +90,8 @@ export default function ChatRoomPage() {
                 </div>
               ),
             )}
-            <div ref={bottom} />
+            {/* 입력창·하단 탭에 가리지 않게 그만큼 띄워서 스크롤 */}
+            <div ref={bottom} style={{ scrollMarginBottom: 140 }} />
           </div>
           <form className="composer" onSubmit={send}>
             <input className="input" value={text} maxLength={500} placeholder="메시지를 입력하세요"
@@ -106,7 +107,7 @@ export default function ChatRoomPage() {
         <div className="card" style={{ padding: '4px 16px' }}>
           {r.members.map((m, i) => (
             <div key={m.seatNo} className="list-item">
-              <div className="avatar" style={{ ...avatarStyle(i), width: 44, height: 44, borderWidth: 2 }}>{m.alias.slice(0, 1)}</div>
+              <div className="avatar" style={{ ...avatarStyle(i), width: 44, height: 44, borderWidth: 2 }}>{m.seatNo}</div>
               <div style={{ flex: 1 }}>
                 <b>{m.alias}{m.me && ' (나)'}</b>
                 <div className="small muted">{m.intro}</div>

@@ -83,8 +83,8 @@ export default function MatchPage() {
         <div className="avatars" style={{ margin: '14px 0 4px' }}>
           {members.map((m, i) => (
             <div key={m.seatNo} className="center" style={{ width: 64 }}>
-              <div className="avatar" style={{ ...avatarStyle(i), margin: '0 auto' }}>{m.alias.slice(0, 1)}</div>
-              <div className="small" style={{ marginTop: 4 }}>{m.me ? '나' : m.alias}</div>
+              <div className="avatar" style={{ ...avatarStyle(i), margin: '0 auto' }}>{m.me ? '나' : m.seatNo}</div>
+              <div className="small" style={{ marginTop: 4 }}>{m.alias}</div>
             </div>
           ))}
         </div>
