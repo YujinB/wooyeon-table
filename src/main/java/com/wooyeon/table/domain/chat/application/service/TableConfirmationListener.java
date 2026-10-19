@@ -33,6 +33,7 @@ public class TableConfirmationListener {
             chatNoticeService.postConfirmationNotices(room);
             chatNoticeService.notifyConfirmed(room);
             chatNoticeService.scheduleReminder(room);
+            chatNoticeService.scheduleContent(room);
         }
     }
 }
