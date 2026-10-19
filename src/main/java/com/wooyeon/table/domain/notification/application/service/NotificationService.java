@@ -46,7 +46,7 @@ public class NotificationService {
     }
 
     /** 푸시로 보낸다 (앱 알림함에는 예약 시각부터 이미 보인다). 푸시 실패는 재시도 대상 */
-    void deliver(Notification notification, LocalDateTime now) {
+    public void deliver(Notification notification, LocalDateTime now) {
         try {
             pushGateway.send(notification.getUserId(), notification.getTitle(), notification.getBody());
             notification.markSent(now);
