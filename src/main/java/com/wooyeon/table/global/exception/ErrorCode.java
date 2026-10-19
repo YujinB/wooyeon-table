@@ -13,6 +13,7 @@ public enum ErrorCode {
     FORBIDDEN(HttpStatus.FORBIDDEN, "권한이 없습니다"),
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다"),
     EVENT_SLOT_NOT_FOUND(HttpStatus.NOT_FOUND, "회차를 찾을 수 없습니다"),
+    EVENT_SLOT_ALREADY_EXISTS(HttpStatus.CONFLICT, "그 날짜에 이미 회차가 있습니다"),
     INVALID_STATUS_TRANSITION(HttpStatus.CONFLICT, "현재 상태에서는 처리할 수 없습니다"),
     APPLICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "신청을 찾을 수 없습니다"),
     DINING_TABLE_NOT_FOUND(HttpStatus.NOT_FOUND, "테이블을 찾을 수 없습니다"),

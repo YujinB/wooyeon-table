@@ -43,6 +43,16 @@ public class EventSlotRepositoryImpl implements EventSlotRepository {
     }
 
     @Override
+    public List<EventSlot> findOpenForApplication(LocalDateTime now) {
+        return jpaRepository.findAllByStatusAndMatchAtAfterOrderByEventDateAsc(EventSlotStatus.RECRUITING, now);
+    }
+
+    @Override
+    public List<EventSlot> findAllLatestFirst() {
+        return jpaRepository.findAllByOrderByEventDateDesc();
+    }
+
+    @Override
     public List<EventSlot> findDueForMatching(LocalDateTime now) {
         return jpaRepository.findAllByStatusAndMatchAtLessThanEqualOrderByEventDateAsc(EventSlotStatus.RECRUITING,
                 now);
