@@ -48,3 +48,5 @@ demo:
   seed:
     # 서버 시작 시 시연용 데이터(지난 모임 1회차 + 다가오는 4회차 대기 참가자)를 한 번 넣는다. 빈 DB에서만
     enabled: ${DEMO_SEED_ENABLED:false}
+    # 신청자 엑셀(가상데이터) 경로. 있으면 291명을 적재하고 지난 회차를 날짜순으로 자동 매칭한다
+    applicants-file: ${DEMO_APPLICANTS_FILE:}

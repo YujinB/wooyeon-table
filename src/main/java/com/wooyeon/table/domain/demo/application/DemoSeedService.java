@@ -1,12 +1,16 @@
 package com.wooyeon.table.domain.demo.application;
 
+import com.wooyeon.table.domain.application.application.dto.ApplicantImportResult;
+import com.wooyeon.table.domain.application.application.service.ApplicantImportService;
 import com.wooyeon.table.domain.application.application.service.ApplicationCommandService;
 import com.wooyeon.table.domain.application.domain.model.Application;
 import com.wooyeon.table.domain.application.domain.model.TicketType;
 import com.wooyeon.table.domain.chat.application.dto.TableMember;
 import com.wooyeon.table.domain.chat.application.service.AdminChatQueryService;
 import com.wooyeon.table.domain.chat.application.service.ChatMemberQueryService;
+import com.wooyeon.table.domain.event.application.dto.EventSlotInfo;
 import com.wooyeon.table.domain.event.application.service.EventSlotCommandService;
+import com.wooyeon.table.domain.event.application.service.EventSlotQueryService;
 import com.wooyeon.table.domain.feedback.application.dto.FeedbackCommand;
 import com.wooyeon.table.domain.feedback.application.service.AttendanceService;
 import com.wooyeon.table.domain.feedback.application.service.EventCloseService;
@@ -28,12 +32,18 @@ import com.wooyeon.table.domain.safety.application.service.SafetyService;
 import com.wooyeon.table.domain.safety.domain.model.ReportReason;
 import com.wooyeon.table.domain.user.application.service.UserCommandService;
 import com.wooyeon.table.domain.user.application.service.UserQueryService;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Clock;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -46,6 +56,7 @@ import org.springframework.stereotype.Service;
 /**
  * 시연용 데이터. 무작위 없이 같은 날 돌리면 같은 결과가 나온다.
  * <ul>
+ *   <li>신청자 엑셀(가상데이터)을 주면 먼저 적재하고, 지난 목요일 이전 회차를 날짜순으로 자동 매칭한다 (벤치마크와 같은 흐름)</li>
  *   <li>지난 목요일: 홍대(체험참가자2 포함)·강남 테이블을 매칭 → 체크인 → 행사 종료 → 일부 후기·신고까지 진행.
  *       체험참가자2는 단체방·후기·참가 이력을, 운영자는 노쇼 후보·신고 예외와 후기 요약을 바로 볼 수 있다</li>
  *   <li>다가오는 목요일 4회차: 회차마다 지역별 5명씩 결제 완료 참가자. 체험 계정이 신청하고 "지금 마감 실행"을 누르면 테이블이 잡힌다</li>
@@ -81,6 +92,8 @@ public class DemoSeedService {
     private final UserQueryService userQueryService;
     private final ProfileCommandService profileCommandService;
     private final EventSlotCommandService eventSlotCommandService;
+    private final EventSlotQueryService eventSlotQueryService;
+    private final ApplicantImportService applicantImportService;
     private final ApplicationCommandService applicationCommandService;
     private final MatchingService matchingService;
     private final MatchingQueryService matchingQueryService;
@@ -93,8 +106,15 @@ public class DemoSeedService {
 
     private int sequence;
 
-    /** @return 이미 시드가 있으면 false */
     public boolean seedIfEmpty(List<String> demoLoginIds) {
+        return seedIfEmpty(demoLoginIds, null);
+    }
+
+    /**
+     * @param applicantsFile 신청자 엑셀. 없으면 가상데이터 없이 시연용 참가자만
+     * @return 이미 시드가 있으면 false
+     */
+    public boolean seedIfEmpty(List<String> demoLoginIds, Path applicantsFile) {
         if (userQueryService.existsByLoginId(MARKER_LOGIN_ID)) {
             return false;
         }
@@ -107,7 +127,11 @@ public class DemoSeedService {
         }
 
         LocalDate today = LocalDate.now(clock);
-        seedPastEvent(today.with(TemporalAdjusters.previous(DayOfWeek.THURSDAY)),
+        LocalDate lastThursday = today.with(TemporalAdjusters.previous(DayOfWeek.THURSDAY));
+        if (applicantsFile != null) {
+            importAndMatchPast(applicantsFile, lastThursday);
+        }
+        seedPastEvent(lastThursday,
                 demoUsers.size() > 1 ? demoUsers.get(1) : null);
 
         LocalDateTime now = LocalDateTime.now(clock);
@@ -128,6 +152,20 @@ public class DemoSeedService {
         }
         log.info("데모 시드 완료: 시드 참가자 {}명, 다가오는 회차 {}개", sequence, UPCOMING_SLOTS);
         return true;
+    }
+
+    /** 가상데이터 적재 후, 지난 목요일보다 앞선 회차를 날짜순으로 매칭 (못 들어간 사람은 다음 희망 날짜로 이월) */
+    private void importAndMatchPast(Path file, LocalDate lastThursday) {
+        try (InputStream input = Files.newInputStream(file)) {
+            ApplicantImportResult result = applicantImportService.importApplicants(input);
+            log.info("가상데이터 적재: {}행 중 {}명", result.totalRows(), result.imported());
+        } catch (IOException e) {
+            throw new UncheckedIOException("신청자 엑셀을 읽지 못했습니다: " + file, e);
+        }
+        eventSlotQueryService.findAllSlots().stream()
+                .filter(slot -> slot.eventDate().isBefore(lastThursday))
+                .sorted(Comparator.comparing(EventSlotInfo::eventDate))
+                .forEach(slot -> matchingService.runForSlot(slot.id()));
     }
 
     /** 지난 목요일 모임을 끝까지 진행해 둔다: 매칭 → 체크인 → 종료 → 후기·신고 */
