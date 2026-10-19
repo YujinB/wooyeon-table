@@ -146,7 +146,13 @@ class MatchingServiceTest {
         Clock betweenDeadlines = Clock.fixed(FIRST.atTime(13, 0).atZone(ZoneId.of("Asia/Seoul")).toInstant(),
                 ZoneId.of("Asia/Seoul"));
 
-        new MatchingScheduler(eventSlotQueryService, matchingService, betweenDeadlines).runDueSlots();
+        MatchingScheduler scheduler = new MatchingScheduler(eventSlotQueryService, matchingService, betweenDeadlines);
+        scheduler.runDueSlots();
+        assertThat(eventSlotQueryService.getSlot(first).status())
+                .as("서버 준비(시드 포함) 전에는 돌지 않음").isEqualTo(EventSlotStatus.RECRUITING);
+
+        scheduler.markReady();
+        scheduler.runDueSlots();
 
         assertThat(eventSlotQueryService.getSlot(first).status()).isEqualTo(EventSlotStatus.MATCHED);
         assertThat(eventSlotQueryService.getSlot(second).status()).isEqualTo(EventSlotStatus.RECRUITING);
