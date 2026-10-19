@@ -26,10 +26,12 @@ public record Dashboard(List<SlotOverview> slots, ExceptionCounts exceptions) {
     }
 
     public record ExceptionCounts(int venue, int notification, int noShow, int reports, int urgentReports,
-                                  int refund) {
+                                  int refund, int total) {
 
-        public int total() {
-            return venue + notification + noShow + reports + refund;
+        public static ExceptionCounts of(int venue, int notification, int noShow, int reports, int urgentReports,
+                                         int refund) {
+            return new ExceptionCounts(venue, notification, noShow, reports, urgentReports, refund,
+                    venue + notification + noShow + reports + refund);
         }
     }
 }

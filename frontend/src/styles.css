@@ -331,3 +331,75 @@ button { font-family: inherit; }
 .option:disabled { opacity: 0.5; cursor: default; }
 .sheet-backdrop { position: fixed; inset: 0; background: rgba(40, 24, 14, 0.4); z-index: 20; display: flex; align-items: flex-end; justify-content: center; }
 .sheet { width: 100%; max-width: 420px; max-height: 85vh; overflow: auto; background: var(--surface); border-radius: 22px 22px 0 0; padding: 20px 18px 28px; }
+
+/* ---------- 운영자 웹 ---------- */
+.admin { display: flex; min-height: 100vh; background: var(--bg); }
+.admin-nav {
+  width: 220px;
+  flex: none;
+  padding: 20px 14px;
+  background: var(--brand-strong);
+  color: #fbe9d7;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+}
+.admin-brand { display: flex; align-items: center; gap: 8px; font-family: var(--serif); font-size: 17px; color: #fff; margin: 0 6px 20px; }
+.admin-nav a, .admin-logout {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  color: #fbe9d7;
+  font-size: 15px;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+}
+.admin-nav a.active { background: rgba(255, 255, 255, 0.14); color: #fff; font-weight: 700; }
+.admin-nav .count { margin-left: auto; background: var(--danger); color: #fff; font-size: 12px; font-weight: 700; border-radius: 999px; padding: 1px 8px; }
+.admin-logout { margin-top: auto; opacity: 0.85; }
+.admin-main { flex: 1; min-width: 0; padding: 28px 32px 60px; max-width: 1200px; }
+.admin-main .h1 { font-size: 26px; }
+.admin-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
+.admin-head .h1 { margin: 0; }
+.crumb { font-size: 13px; color: var(--muted); margin-bottom: 4px; }
+.crumb a { color: var(--brand); }
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+.kpi { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; }
+.kpi b { display: block; font-size: 26px; color: var(--brand-strong); line-height: 1.2; }
+.kpi span { font-size: 13px; color: var(--muted); }
+.kpi.alert b { color: var(--danger); }
+.kpi.zero b { color: var(--ok); }
+.grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 16px; }
+table.data { width: 100%; border-collapse: collapse; font-size: 14px; background: #fff; }
+table.data th { text-align: left; font-size: 12px; color: var(--muted); font-weight: 700; padding: 10px 12px; border-bottom: 1px solid var(--line); background: var(--surface-2); white-space: nowrap; }
+table.data td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+table.data tr:last-child td { border-bottom: 0; }
+table.data tr.link { cursor: pointer; }
+table.data tr.link:hover td { background: var(--surface); }
+table.data .num { text-align: right; font-variant-numeric: tabular-nums; }
+.table-wrap { border: 1px solid var(--line); border-radius: 14px; overflow-x: auto; }
+.bar { height: 8px; border-radius: 4px; background: var(--brand-soft); overflow: hidden; }
+.bar > div { height: 100%; background: var(--brand); }
+.score-row { display: grid; grid-template-columns: 110px 1fr 70px; gap: 10px; align-items: center; font-size: 14px; }
+.score-row + .score-row { margin-top: 10px; }
+.exception { display: flex; gap: 14px; align-items: flex-start; padding: 14px 16px; background: #fff; border: 1px solid var(--line); border-radius: 14px; }
+.exception + .exception { margin-top: 10px; }
+.exception.urgent { border-color: var(--danger); box-shadow: 0 0 0 2px #f7e1dc; }
+.exception .body { flex: 1; min-width: 0; }
+.exception .actions { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.filter { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+@media (max-width: 760px) {
+  .admin { flex-direction: column; }
+  .admin-nav { width: auto; height: auto; position: static; flex-direction: row; flex-wrap: wrap; padding: 10px; }
+  .admin-brand { width: 100%; margin-bottom: 6px; }
+  .admin-logout { margin-top: 0; }
+  .admin-main { padding: 18px 16px 40px; }
+}

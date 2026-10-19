@@ -80,7 +80,8 @@ class AdminOperationFlowTest {
                 .andExpect(jsonPath(slot + ".confirmed").value(5))
                 .andExpect(jsonPath(slot + ".matchFailed").value(1))
                 .andExpect(jsonPath(slot + ".tables").value(1))
-                .andExpect(jsonPath("$.data.exceptions.noShow").value(5));
+                .andExpect(jsonPath("$.data.exceptions.noShow").value(5))
+                .andExpect(jsonPath("$.data.exceptions.total").value(5));
 
         mockMvc.perform(get("/api/admin/slots/" + slotId + "/applicants").header(HttpHeaders.AUTHORIZATION, admin()))
                 .andExpect(status().isOk())

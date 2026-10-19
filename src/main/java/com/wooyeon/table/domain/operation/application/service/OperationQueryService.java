@@ -65,7 +65,7 @@ public class OperationQueryService {
                 .map(slot -> overview(slot, applications, tables.getOrDefault(slot.id(), 0L)))
                 .toList();
         List<ReportView> reports = sanctionService.reports(true);
-        ExceptionCounts counts = new ExceptionCounts(venueQueryService.findFailures().size(),
+        ExceptionCounts counts = ExceptionCounts.of(venueQueryService.findFailures().size(),
                 notificationQueryService.findGaveUp().size(), attendanceQueryService.findNoShowCandidates().size(),
                 reports.size(), (int) reports.stream().filter(ReportView::urgent).count(),
                 applicationQueryService.findByPaymentStatus(PaymentStatus.REFUND_FAILED).size());
