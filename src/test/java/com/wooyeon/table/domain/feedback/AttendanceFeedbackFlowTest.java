@@ -46,6 +46,13 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 import org.junit.jupiter.api.BeforeEach;
+import com.wooyeon.table.domain.feedback.application.service.FeedbackReminderService;
+import com.wooyeon.table.domain.feedback.application.service.HistoryService;
+import com.wooyeon.table.domain.feedback.domain.repository.AttendanceRepository;
+import com.wooyeon.table.domain.feedback.domain.repository.FeedbackRepository;
+import com.wooyeon.table.domain.notification.application.service.NotificationService;
+import java.time.Clock;
+import java.time.ZoneId;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -75,6 +82,14 @@ class AttendanceFeedbackFlowTest {
     private PersonPreferenceRepository personPreferenceRepository;
     @Autowired
     private NotificationRepository notificationRepository;
+    @Autowired
+    private AttendanceRepository attendanceRepository;
+    @Autowired
+    private FeedbackRepository feedbackRepository;
+    @Autowired
+    private NotificationService notificationService;
+    @Autowired
+    private HistoryService historyService;
     @Autowired
     private EventSlotCommandService eventSlotCommandService;
     @Autowired
@@ -196,6 +211,35 @@ class AttendanceFeedbackFlowTest {
 
         eventCloseService.close(slot);
         assertThat(eventSlotQueryService.findSlotIdsDueForClosing(startsAt.plusHours(5), 4)).doesNotContain(slot);
+    }
+
+    @Test
+    void 다음_날_후기를_안_쓴_참석자에게만_한_번_리마인드하고_새_회차가_열리면_추천_알림을_보낸다() throws Exception {
+        attendance(0, "/check-in");
+        attendance(1, "/check-in");
+        eventCloseService.close(slot);
+        submit(1, Map.of());
+
+        // 모임 다음 날 20시: 참석했는데 후기를 안 쓴 좌석 1만, 두 번 돌려도 한 번
+        Clock nextDay = Clock.fixed(DATE.plusDays(1).atTime(20, 0).atZone(ZoneId.of("Asia/Seoul")).toInstant(),
+                ZoneId.of("Asia/Seoul"));
+        FeedbackReminderService reminder = new FeedbackReminderService(attendanceRepository, feedbackRepository,
+                eventSlotQueryService, notificationService, historyService, nextDay);
+        reminder.remindMissingFeedback();
+        reminder.remindMissingFeedback();
+        assertThat(notificationRepository.existsByDedupKey("FEEDBACK_REMINDER:" + members.get(0).applicationId()))
+                .isTrue();
+        assertThat(notificationRepository.existsByDedupKey("FEEDBACK_REMINDER:" + members.get(1).applicationId()))
+                .as("후기를 쓴 사람").isFalse();
+        assertThat(notificationRepository.existsByDedupKey("FEEDBACK_REMINDER:" + members.get(2).applicationId()))
+                .as("노쇼 후보").isFalse();
+
+        // 운영자가 새 회차를 열면 참석 이력이 있는 사람에게 추천 알림
+        Long opened = eventSlotCommandService.create(LocalDate.now().plusDays(60), null, null);
+        assertThat(notificationRepository.existsByDedupKey("NEXT_SLOT_OPENED:" + opened + ":" + members.get(0).userId()))
+                .isTrue();
+        assertThat(notificationRepository.existsByDedupKey("NEXT_SLOT_OPENED:" + opened + ":" + members.get(2).userId()))
+                .as("참석 이력 없음").isFalse();
     }
 
     private ResultActions attendance(int seat, String action) throws Exception {

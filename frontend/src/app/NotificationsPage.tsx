@@ -8,6 +8,7 @@ import { useApi } from '../useApi';
 
 /** 알림을 누르면 관련 화면으로 */
 function target(item: NotificationItem): string | null {
+  if (item.type === 'NEXT_SLOT_OPENED') return '/app/apply';
   if (!item.applicationId) return null;
   const base = `/app/applications/${item.applicationId}`;
   switch (item.type) {
@@ -17,6 +18,7 @@ function target(item: NotificationItem): string | null {
     case 'MATCH_FAILED':
       return `${base}/resolve`;
     case 'FEEDBACK_REQUESTED':
+    case 'FEEDBACK_REMINDER':
       return `${base}/feedback`;
     default:
       return base;
