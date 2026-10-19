@@ -25,4 +25,6 @@ public interface ApplicationJpaRepository extends JpaRepository<Application, Lon
                                             PaymentStatus paymentStatus, MatchStatus matchStatus);
 
     boolean existsByUserId(Long userId);
+
+    List<Application> findAllByUserIdOrderByIdDesc(Long userId);
 }
