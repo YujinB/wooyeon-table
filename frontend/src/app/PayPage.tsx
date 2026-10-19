@@ -7,7 +7,7 @@ import { ErrorBox, Loading } from '../components/ui';
 import { dateTime, day, won } from '../format';
 import { useApi } from '../useApi';
 
-/** 모의 결제 (PAY-01) + 결제 전 환불 규정 (PAY-02) */
+/** 모의 결제 (PAY-01) + 결제 전과 신청 완료 화면의 환불·노쇼 규정 (PAY-02) */
 export default function PayPage() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -48,6 +48,19 @@ export default function PayPage() {
           <p style={{ margin: 0 }}>{a.statusMessage}</p>
           {a.schedule && <p className="muted small" style={{ margin: '6px 0 0' }}>매칭 발표 {dateTime(a.schedule.matchAnnounceAt)}</p>}
         </div>
+        {policy.data && (
+          <div className="card" style={{ textAlign: 'left', marginTop: 12 }}>
+            <p className="small" style={{ margin: 0, fontWeight: 700 }}>환불·취소 규정</p>
+            <ul className="small muted" style={{ margin: '6px 0 0', paddingLeft: 18 }}>
+              {policy.data.rules.slice(0, 3).map((rule) => <li key={rule} style={{ marginBottom: 4 }}>{rule}</li>)}
+            </ul>
+            {a.schedule && (
+              <p className="small" style={{ margin: '6px 0 0' }}>
+                이 신청은 <b>{dateTime(a.schedule.refundClosesAt)}</b>까지 취소하면 전액 환불돼요.
+              </p>
+            )}
+          </div>
+        )}
         <div className="spacer" />
         <button className="btn btn-primary btn-block" onClick={() => navigate('/app', { replace: true })}>홈으로</button>
       </div>
