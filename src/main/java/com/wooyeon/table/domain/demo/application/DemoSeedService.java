@@ -56,7 +56,8 @@ import org.springframework.stereotype.Service;
 /**
  * 시연용 데이터. 무작위 없이 같은 날 돌리면 같은 결과가 나온다.
  * <ul>
- *   <li>신청자 엑셀(가상데이터)을 주면 먼저 적재하고, 지난 목요일 이전 회차를 날짜순으로 자동 매칭한다 (벤치마크와 같은 흐름)</li>
+ *   <li>신청자 엑셀(가상데이터)을 주면 먼저 적재하고, 지난 목요일 이전 회차를 날짜순으로 자동 매칭한다 (벤치마크와 같은 흐름).
+ *       엑셀에는 참석 기록이 없어 그 회차들은 전원 참석으로 종료 처리한다</li>
  *   <li>지난 목요일: 홍대(체험참가자2 포함)·강남 테이블을 매칭 → 체크인 → 행사 종료 → 일부 후기·신고까지 진행.
  *       체험참가자2는 단체방·후기·참가 이력을, 운영자는 노쇼 후보·신고 예외와 후기 요약을 바로 볼 수 있다</li>
  *   <li>다가오는 목요일 4회차: 회차마다 지역별 5명씩 결제 완료 참가자. 체험 계정이 신청하고 "지금 마감 실행"을 누르면 테이블이 잡힌다</li>
@@ -165,7 +166,18 @@ public class DemoSeedService {
         eventSlotQueryService.findAllSlots().stream()
                 .filter(slot -> slot.eventDate().isBefore(lastThursday))
                 .sorted(Comparator.comparing(EventSlotInfo::eventDate))
-                .forEach(slot -> matchingService.runForSlot(slot.id()));
+                .forEach(slot -> {
+                    matchingService.runForSlot(slot.id());
+                    closeAsAttended(slot.id());
+                });
+    }
+
+    /** 가상데이터에는 참석 기록이 없어 지난 회차는 확정 인원 전원 참석으로 보고 종료 처리 (노쇼 후보가 쏟아지지 않게) */
+    private void closeAsAttended(Long slotId) {
+        matchingQueryService.findConfirmedTables(slotId).stream()
+                .flatMap(table -> chatMemberQueryService.membersOfTable(table.tableId()).stream())
+                .forEach(member -> attendanceService.checkIn(member.userId(), member.applicationId()));
+        eventCloseService.close(slotId);
     }
 
     /** 지난 목요일 모임을 끝까지 진행해 둔다: 매칭 → 체크인 → 종료 → 후기·신고 */

@@ -13,6 +13,7 @@ import com.wooyeon.table.domain.application.infrastructure.persistence.Applicati
 import com.wooyeon.table.domain.chat.application.dto.TableMember;
 import com.wooyeon.table.domain.chat.application.service.ChatMemberQueryService;
 import com.wooyeon.table.domain.event.application.service.EventSlotCommandService;
+import com.wooyeon.table.domain.event.application.service.EventSlotQueryService;
 import com.wooyeon.table.domain.feedback.application.dto.AttendanceView;
 import com.wooyeon.table.domain.feedback.application.service.EventCloseService;
 import com.wooyeon.table.domain.feedback.domain.model.PersonPreference;
@@ -37,6 +38,7 @@ import com.wooyeon.table.domain.user.domain.model.UserRole;
 import com.wooyeon.table.global.auth.AuthTokenProvider;
 import com.wooyeon.table.support.IntegrationTest;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -75,6 +77,8 @@ class AttendanceFeedbackFlowTest {
     private NotificationRepository notificationRepository;
     @Autowired
     private EventSlotCommandService eventSlotCommandService;
+    @Autowired
+    private EventSlotQueryService eventSlotQueryService;
     @Autowired
     private UserCommandService userCommandService;
     @Autowired
@@ -182,6 +186,16 @@ class AttendanceFeedbackFlowTest {
                 .andExpect(jsonPath("$.data.comments[0].comment").value("즐거웠어요"))
                 .andReturn().getResponse().getContentAsString();
         assertThat(summary).doesNotContain("avoidSeats", "wantAgainSeats");
+    }
+
+    @Test
+    void 행사_시작_4시간이_지난_매칭_완료_회차만_자동_종료_대상이다() {
+        LocalDateTime startsAt = DATE.atTime(19, 30);
+        assertThat(eventSlotQueryService.findSlotIdsDueForClosing(startsAt.plusHours(3), 4)).doesNotContain(slot);
+        assertThat(eventSlotQueryService.findSlotIdsDueForClosing(startsAt.plusHours(4), 4)).contains(slot);
+
+        eventCloseService.close(slot);
+        assertThat(eventSlotQueryService.findSlotIdsDueForClosing(startsAt.plusHours(5), 4)).doesNotContain(slot);
     }
 
     private ResultActions attendance(int seat, String action) throws Exception {
