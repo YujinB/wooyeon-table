@@ -83,6 +83,43 @@ public class PaymentService {
         return result(applicationId, true, PaymentRecordType.CHARGE, ticket.getPrice(), null, expiresOn);
     }
 
+    /**
+     * 원결제수단으로 자동 환불 (PAY-03 모의). 환불 요청 → 처리 중 → 완료/실패로 상태를 옮기고,
+     * 실패하면 REFUND_FAILED로 남겨 운영자 예외 목록에 올린다. 멤버십을 산 결제면 멤버십도 끝낸다
+     */
+    public PaymentResult refund(Long applicationId, boolean simulateFailure) {
+        ApplicationInfo application = applicationQueryService.getApplication(applicationId);
+        PaymentRecord charge = paymentRecordRepository.findAllByApplicationId(applicationId).stream()
+                .filter(PaymentRecord::isRefundableCharge)
+                .reduce((first, second) -> second)
+                .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_STATUS_TRANSITION,
+                        "환불할 결제가 없습니다 (신청 " + applicationId + ")"));
+        applicationCommandService.requestRefund(applicationId);
+        applicationCommandService.startRefund(applicationId);
+
+        GatewayResult refunded = paymentGateway.refund(charge.getTransactionId(), charge.getAmount(),
+                simulateFailure);
+        if (!refunded.success()) {
+            paymentRecordRepository.save(PaymentRecord.failed(applicationId, application.userId(),
+                    PaymentRecordType.REFUND, charge.getAmount(), refunded.failureReason()));
+            applicationCommandService.failRefund(applicationId);
+            return result(applicationId, false, PaymentRecordType.REFUND, charge.getAmount(),
+                    refunded.failureReason(), null);
+        }
+        paymentRecordRepository.save(PaymentRecord.succeeded(applicationId, application.userId(),
+                PaymentRecordType.REFUND, charge.getAmount(), refunded.transactionId()));
+        applicationCommandService.completeRefund(applicationId);
+        membershipRepository.findBySourceApplicationId(applicationId).ifPresent(Membership::cancel);
+        return result(applicationId, true, PaymentRecordType.REFUND, charge.getAmount(), null, null);
+    }
+
+    /** 실제로 결제한 금액이 있는지 (멤버십 사용 0원 신청은 환불할 것이 없다) */
+    @Transactional(readOnly = true)
+    public boolean hasRefundableCharge(Long applicationId) {
+        return paymentRecordRepository.findAllByApplicationId(applicationId).stream()
+                .anyMatch(PaymentRecord::isRefundableCharge);
+    }
+
     /** 아직 신청 마감 전인 날짜. 모두 마감됐으면 결제할 수 없다 */
     private List<LocalDate> openEventDates(ApplicationInfo application) {
         LocalDateTime now = LocalDateTime.now(clock);
