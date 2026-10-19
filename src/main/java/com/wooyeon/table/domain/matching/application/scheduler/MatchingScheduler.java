@@ -7,6 +7,8 @@ import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -23,9 +25,19 @@ public class MatchingScheduler {
     private final EventSlotQueryService eventSlotQueryService;
     private final MatchingService matchingService;
     private final Clock clock;
+    private volatile boolean ready;
+
+    /** 서버 시작 작업(데모 시드 등)이 끝난 뒤부터 돈다. 시드가 회차를 채우는 중에 먼저 매칭·종료하지 않게 */
+    @EventListener(ApplicationReadyEvent.class)
+    public void markReady() {
+        ready = true;
+    }
 
     @Scheduled(fixedDelayString = "${matching.scheduler.interval-ms:60000}")
     public void runDueSlots() {
+        if (!ready) {
+            return;
+        }
         for (Long slotId : eventSlotQueryService.findSlotIdsDueForMatching(LocalDateTime.now(clock))) {
             try {
                 matchingService.runForSlot(slotId);
