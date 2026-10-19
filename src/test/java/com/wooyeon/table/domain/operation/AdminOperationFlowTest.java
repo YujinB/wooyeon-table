@@ -1,7 +1,9 @@
 package com.wooyeon.table.domain.operation;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -95,7 +97,28 @@ class AdminOperationFlowTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.length()").value(6))
                 .andExpect(jsonPath("$.data[?(@.confirmedHere == true)]", hasSize(5)))
-                .andExpect(jsonPath("$.data[?(@.status == 'MATCH_FAILED')].regions[0]").value("잠실"));
+                .andExpect(jsonPath("$.data[?(@.status == 'MATCH_FAILED')].regions[0]").value("잠실"))
+                // 이전 참석·노쇼 이력: 종료 처리로 확정자 5명은 노쇼 후보 1회씩
+                .andExpect(jsonPath("$.data[?(@.confirmedHere == true && @.noShow == 1)]", hasSize(5)))
+                .andExpect(jsonPath("$.data[0].age").value(LocalDate.now().getYear() - 1994))
+                .andExpect(jsonPath("$.data[0].mbti").exists());
+
+        // CSV: 헤더 + 신청 6줄, 테이블 결과는 좌석 5줄 (엑셀용 BOM)
+        byte[] applicantsCsv = mockMvc.perform(get("/api/admin/slots/" + slotId + "/applicants.csv")
+                        .header(HttpHeaders.AUTHORIZATION, admin()))
+                .andExpect(status().isOk())
+                .andExpect(header().string(HttpHeaders.CONTENT_DISPOSITION,
+                        org.hamcrest.Matchers.containsString("applicants-" + EVENT_DATE + ".csv")))
+                .andReturn().getResponse().getContentAsByteArray();
+        String applicants = new String(applicantsCsv, java.nio.charset.StandardCharsets.UTF_8);
+        assertThat(applicants).startsWith("﻿신청ID,이름");
+        assertThat(applicants.split("\r\n")).hasSize(7);
+        String tables = new String(mockMvc.perform(get("/api/admin/slots/" + slotId + "/tables.csv")
+                        .header(HttpHeaders.AUTHORIZATION, admin()))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsByteArray(), java.nio.charset.StandardCharsets.UTF_8);
+        assertThat(tables.split("\r\n")).hasSize(6);
+        assertThat(tables).contains("운영테스트");
 
         mockMvc.perform(get("/api/admin/exceptions").header(HttpHeaders.AUTHORIZATION, admin()))
                 .andExpect(status().isOk())

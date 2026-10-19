@@ -24,12 +24,16 @@ import com.wooyeon.table.domain.operation.application.dto.Dashboard.SlotOverview
 import com.wooyeon.table.domain.operation.application.dto.ExceptionItem;
 import com.wooyeon.table.domain.operation.application.dto.ExceptionItem.ExceptionType;
 import com.wooyeon.table.domain.operation.application.dto.SlotApplicant;
+import com.wooyeon.table.domain.profile.application.dto.MatchingProfile;
+import com.wooyeon.table.domain.profile.application.service.ProfileQueryService;
 import com.wooyeon.table.domain.profile.domain.model.Region;
 import com.wooyeon.table.domain.safety.application.dto.ReportView;
 import com.wooyeon.table.domain.safety.application.service.SanctionService;
 import com.wooyeon.table.domain.user.application.service.UserQueryService;
 import com.wooyeon.table.domain.venue.application.dto.VenueAssignmentView;
 import com.wooyeon.table.domain.venue.application.service.VenueQueryService;
+import java.time.Clock;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import com.wooyeon.table.domain.feedback.domain.model.AttendanceStatus;
 import java.util.ArrayList;
@@ -64,6 +68,8 @@ public class OperationQueryService {
     private final SanctionService sanctionService;
     private final UserQueryService userQueryService;
     private final PaymentQueryService paymentQueryService;
+    private final ProfileQueryService profileQueryService;
+    private final Clock clock;
 
     public Dashboard dashboard() {
         List<ApplicationInfo> applications = applicationQueryService.findAllSubmitted();
@@ -97,6 +103,10 @@ public class OperationQueryService {
                 percent(attended, attended + noShow));
     }
 
+    private static int countAttendance(List<AttendanceView> history, AttendanceStatus status) {
+        return (int) history.stream().filter(attendance -> attendance.status() == status).count();
+    }
+
     private static long count(List<ApplicationInfo> applications, MatchStatus status) {
         return applications.stream().filter(application -> application.matchStatus() == status).count();
     }
@@ -111,17 +121,32 @@ public class OperationQueryService {
         List<ApplicationInfo> applications = applicationQueryService.findAllSubmitted().stream()
                 .filter(application -> belongsTo(application, slotId))
                 .toList();
-        Map<Long, String> names = userQueryService.findNames(
-                applications.stream().map(ApplicationInfo::userId).toList());
+        List<Long> userIds = applications.stream().map(ApplicationInfo::userId).toList();
+        Map<Long, String> names = userQueryService.findNames(userIds);
+        Map<Long, MatchingProfile> profiles = profileQueryService.findMatchingProfiles(userIds);
+        Map<Long, List<AttendanceView>> attendances = attendanceQueryService.findByUsers(userIds);
+        Map<Long, Long> reported = sanctionService.reports(false).stream()
+                .collect(Collectors.groupingBy(ReportView::reportedUserId, Collectors.counting()));
+        int year = LocalDate.now(clock).getYear();
         return applications.stream()
                 .map(application -> {
                     ParticipantStatus status = ParticipantStatus.of(application.applicationStatus(),
                             application.paymentStatus(), application.matchStatus());
+                    MatchingProfile profile = profiles.get(application.userId());
+                    List<AttendanceView> history = attendances.getOrDefault(application.userId(), List.of());
                     return new SlotApplicant(application.id(), application.userId(), names.get(application.userId()),
+                            profile == null ? null : profile.ageIn(year),
+                            profile == null ? null : profile.gender().getLabel(),
+                            profile == null || profile.mbti() == null ? null : profile.mbti().code(),
                             application.ticketType().getLabel(),
                             application.regions().stream().sorted().map(Region::getLabel).toList(), status,
                             status.getLabel(), application.paymentStatus().getLabel(),
-                            slotId.equals(application.confirmedSlotId()), application.submittedAt());
+                            slotId.equals(application.confirmedSlotId()), application.submittedAt(),
+                            countAttendance(history, AttendanceStatus.ATTENDED),
+                            countAttendance(history, AttendanceStatus.NO_SHOW)
+                                    + countAttendance(history, AttendanceStatus.NO_SHOW_CANDIDATE),
+                            countAttendance(history, AttendanceStatus.CANCELED_LATE),
+                            reported.getOrDefault(application.userId(), 0L).intValue());
                 })
                 .toList();
     }

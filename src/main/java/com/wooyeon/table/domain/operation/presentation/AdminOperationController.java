@@ -6,10 +6,17 @@ import com.wooyeon.table.domain.operation.application.dto.AdminRows.ReportRow;
 import com.wooyeon.table.domain.operation.application.dto.Dashboard;
 import com.wooyeon.table.domain.operation.application.dto.ExceptionItem;
 import com.wooyeon.table.domain.operation.application.dto.SlotApplicant;
+import com.wooyeon.table.domain.operation.application.service.CsvExportService;
+import com.wooyeon.table.domain.operation.application.service.CsvExportService.CsvFile;
 import com.wooyeon.table.domain.operation.application.service.OperationQueryService;
 import com.wooyeon.table.global.response.ApiResponse;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -21,6 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class AdminOperationController {
 
     private final OperationQueryService operationQueryService;
+    private final CsvExportService csvExportService;
 
     /** 회차별 신청·결제·매칭 현황 + 예외 건수 */
     @GetMapping("/dashboard")
@@ -31,6 +39,26 @@ public class AdminOperationController {
     @GetMapping("/slots/{slotId}/applicants")
     public ApiResponse<List<SlotApplicant>> applicants(@PathVariable Long slotId) {
         return ApiResponse.ok(operationQueryService.applicants(slotId));
+    }
+
+    /** 회차 신청자 CSV (PRD 16절) */
+    @GetMapping("/slots/{slotId}/applicants.csv")
+    public ResponseEntity<byte[]> applicantsCsv(@PathVariable Long slotId) {
+        return csv(csvExportService.applicants(slotId));
+    }
+
+    /** 회차 테이블 결과 CSV: 좌석 한 줄씩 (PRD 16절) */
+    @GetMapping("/slots/{slotId}/tables.csv")
+    public ResponseEntity<byte[]> tablesCsv(@PathVariable Long slotId) {
+        return csv(csvExportService.tables(slotId));
+    }
+
+    private static ResponseEntity<byte[]> csv(CsvFile file) {
+        return ResponseEntity.ok()
+                .contentType(new MediaType("text", "csv", StandardCharsets.UTF_8))
+                .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.attachment()
+                        .filename(file.filename()).build().toString())
+                .body(file.content());
     }
 
     /** 결제·환불 내역 (PRD 11절 결제·환불) */

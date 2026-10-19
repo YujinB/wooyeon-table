@@ -3,9 +3,11 @@ package com.wooyeon.table.domain.feedback.application.service;
 import com.wooyeon.table.domain.feedback.application.dto.AttendanceView;
 import com.wooyeon.table.domain.feedback.domain.model.AttendanceStatus;
 import com.wooyeon.table.domain.feedback.domain.repository.AttendanceRepository;
+import java.util.Collection;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,6 +22,16 @@ public class AttendanceQueryService {
 
     public List<AttendanceView> findByUser(Long userId) {
         return attendanceRepository.findAllByUserIdIn(List.of(userId)).stream().map(AttendanceView::from).toList();
+    }
+
+    /** 사용자별 참석 기록 (운영자 신청자 목록) */
+    public Map<Long, List<AttendanceView>> findByUsers(Collection<Long> userIds) {
+        if (userIds.isEmpty()) {
+            return Map.of();
+        }
+        return attendanceRepository.findAllByUserIdIn(userIds).stream()
+                .map(AttendanceView::from)
+                .collect(Collectors.groupingBy(AttendanceView::userId));
     }
 
     /** 참석 상태별 인원 (운영 대시보드) */
