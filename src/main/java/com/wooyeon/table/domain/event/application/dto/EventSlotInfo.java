@@ -19,6 +19,14 @@ public record EventSlotInfo(Long id, LocalDate eventDate, LocalTime startTime, L
         return EventSlot.refundClosesAt(eventDate);
     }
 
+    public LocalDateTime reminderAt() {
+        return EventSlot.reminderAt(eventDate);
+    }
+
+    public LocalDateTime startsAt() {
+        return eventDate.atTime(startTime);
+    }
+
     public boolean isOpenForApplication(LocalDateTime now) {
         return isRecruiting() && now.isBefore(matchAt);
     }
