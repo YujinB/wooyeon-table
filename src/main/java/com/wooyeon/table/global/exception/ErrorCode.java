@@ -20,6 +20,7 @@ public enum ErrorCode {
     APPLICATION_CLOSED(HttpStatus.CONFLICT, "신청이 마감된 회차입니다"),
     PAYMENT_NOT_ALLOWED(HttpStatus.CONFLICT, "결제할 수 없는 신청입니다"),
     CANCEL_NOT_ALLOWED(HttpStatus.CONFLICT, "취소할 수 없는 신청입니다"),
+    RESOLUTION_NOT_AVAILABLE(HttpStatus.CONFLICT, "매칭 실패 해결을 고를 수 있는 신청이 아닙니다"),
     DUPLICATE_APPLICATION(HttpStatus.CONFLICT, "이미 신청한 날짜가 있습니다"),
     DINING_TABLE_NOT_FOUND(HttpStatus.NOT_FOUND, "테이블을 찾을 수 없습니다"),
     IMPORT_FAILED(HttpStatus.BAD_REQUEST, "신청자 파일을 읽을 수 없습니다"),

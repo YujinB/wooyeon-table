@@ -2,10 +2,17 @@ package com.wooyeon.table.domain.application.application.service;
 
 import com.wooyeon.table.domain.application.application.dto.ApplicationInfo;
 import com.wooyeon.table.domain.application.application.dto.MatchCandidateApplication;
+import com.wooyeon.table.domain.application.domain.model.Application;
+import com.wooyeon.table.domain.application.domain.model.MatchStatus;
 import com.wooyeon.table.domain.application.domain.repository.ApplicationRepository;
+import com.wooyeon.table.domain.profile.domain.model.Region;
 import com.wooyeon.table.global.exception.BusinessException;
 import com.wooyeon.table.global.exception.ErrorCode;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +29,27 @@ public class ApplicationQueryService {
         return applicationRepository.findMatchCandidates(slotId).stream()
                 .map(MatchCandidateApplication::from)
                 .toList();
+    }
+
+    /** 그 회차 매칭 후보(결제 완료·대기)를 지역별로 센다. 여러 지역을 고른 사람은 지역마다 센다 */
+    public Map<Region, Long> countCandidatesByRegion(Long slotId) {
+        Map<Region, Long> counts = new EnumMap<>(Region.class);
+        for (Region region : Region.values()) {
+            counts.put(region, 0L);
+        }
+        applicationRepository.findMatchCandidates(slotId)
+                .forEach(application -> application.getRegions().forEach(region -> counts.merge(region, 1L, Long::sum)));
+        return counts;
+    }
+
+    /** 취소하지 않은 신청들이 고른 회차 (같은 날짜 중복 신청 방지·대체 일정 후보 제외용) */
+    public Set<Long> findActiveSlotIds(Long userId) {
+        return applicationRepository.findAllByUserId(userId).stream()
+                .filter(Application::isActive)
+                .filter(application -> application.getMatchStatus() == MatchStatus.WAITING
+                        || application.getMatchStatus() == MatchStatus.CONFIRMED)
+                .flatMap(application -> application.getPreferredSlotIds().stream())
+                .collect(Collectors.toSet());
     }
 
     public List<ApplicationInfo> findMyApplications(Long userId) {
