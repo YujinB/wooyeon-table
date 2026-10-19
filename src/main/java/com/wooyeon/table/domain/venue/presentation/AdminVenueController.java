@@ -42,6 +42,12 @@ public class AdminVenueController {
         return ApiResponse.ok(venueAssignmentService.assignSlot(slotId));
     }
 
+    /** 테이블 식당 배정 상태 (테이블 상세 화면용) */
+    @GetMapping("/tables/{tableId}/venue")
+    public ApiResponse<VenueAssignmentView> tableVenue(@PathVariable Long tableId) {
+        return ApiResponse.ok(venueQueryService.findByTable(tableId).orElse(null));
+    }
+
     /** 식당 배정 실패 예외 목록 */
     @GetMapping("/venue-exceptions")
     public ApiResponse<List<VenueAssignmentView>> failures() {
