@@ -18,7 +18,7 @@ public record MyMatchResult(Long applicationId, MatchStatus matchStatus, String 
     /**
      * @param reasons 왜 이 테이블인지 참가자에게 보여줄 문장
      */
-    public record MyTable(LocalDate eventDate, LocalTime startTime, String region, int size, int minAge, int maxAge,
+    public record MyTable(Long tableId, LocalDate eventDate, LocalTime startTime, String region, int size, int minAge, int maxAge,
                           int maleCount, int femaleCount, List<String> commonInterests, List<String> reasons) {
     }
 

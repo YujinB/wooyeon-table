@@ -8,6 +8,7 @@ import com.wooyeon.table.domain.event.application.service.EventSlotCommandServic
 import com.wooyeon.table.domain.event.application.service.EventSlotQueryService;
 import com.wooyeon.table.domain.matching.application.dto.MatchRunSummary;
 import com.wooyeon.table.domain.matching.application.event.MatchFailedEvent;
+import com.wooyeon.table.domain.matching.application.event.TablesConfirmedEvent;
 import com.wooyeon.table.domain.matching.domain.model.Candidate;
 import com.wooyeon.table.domain.matching.domain.model.DiningTable;
 import com.wooyeon.table.domain.matching.domain.model.MatchFailure;
@@ -129,6 +130,9 @@ public class MatchingService {
                     .toList()));
         }
         eventSlotCommandService.markMatched(slotId);
+        if (!result.tables().isEmpty()) {
+            eventPublisher.publishEvent(new TablesConfirmedEvent(slotId));
+        }
 
         log.info("회차 {} 매칭 완료: 후보 {}명, 확정 {}명({}개 테이블), 이월 {}명, 대체 안내 {}명", slot.eventDate(),
                 candidates.size(), result.assignedCount(), result.tables().size(), carriedOver.size(),
