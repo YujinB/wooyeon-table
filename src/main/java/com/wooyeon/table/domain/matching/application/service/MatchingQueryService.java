@@ -5,6 +5,7 @@ import com.wooyeon.table.domain.application.application.service.ApplicationQuery
 import com.wooyeon.table.domain.application.domain.model.MatchStatus;
 import com.wooyeon.table.domain.event.application.dto.EventSlotInfo;
 import com.wooyeon.table.domain.event.application.service.EventSlotQueryService;
+import com.wooyeon.table.domain.matching.application.dto.ConfirmedTable;
 import com.wooyeon.table.domain.matching.application.dto.FailureDetail;
 import com.wooyeon.table.domain.matching.application.dto.MatchRunSummary;
 import com.wooyeon.table.domain.matching.application.dto.MyMatchResult;
@@ -92,6 +93,17 @@ public class MatchingQueryService {
     }
 
     /** 참가자용 내 매칭 결과: 확정이면 테이블 요약과 "왜 이 테이블인지", 실패면 사유와 다음 단계 */
+    /** 회차의 확정 테이블 요약 (식당 배정·단체방 생성 등 확정 후 처리용) */
+    public List<ConfirmedTable> findConfirmedTables(Long slotId) {
+        return diningTableRepository.findAllBySlotId(slotId).stream().map(ConfirmedTable::from).toList();
+    }
+
+    public ConfirmedTable getConfirmedTable(Long tableId) {
+        return diningTableRepository.findById(tableId)
+                .map(ConfirmedTable::from)
+                .orElseThrow(() -> new BusinessException(ErrorCode.DINING_TABLE_NOT_FOUND, String.valueOf(tableId)));
+    }
+
     /** 참가자 본인 신청의 매칭 결과. 다른 사람 신청이면 없는 신청으로 응답한다 */
     public MyMatchResult getMyResult(Long userId, Long applicationId) {
         applicationQueryService.getOwnedApplication(userId, applicationId);
@@ -163,7 +175,7 @@ public class MatchingQueryService {
         if (mySeat.getPlacement() != PlacementReason.INITIAL) {
             reasons.add(mySeat.getPlacement().getDescription());
         }
-        return new MyTable(slot.eventDate(), slot.startTime(), table.getRegion().getLabel(), table.size(),
+        return new MyTable(table.getId(), slot.eventDate(), slot.startTime(), table.getRegion().getLabel(), table.size(),
                 table.getMinAge(), table.getMaxAge(), table.getMaleCount(), table.getFemaleCount(),
                 interestLabels(table.getCommonInterests()), reasons);
     }
