@@ -18,6 +18,8 @@ public enum ErrorCode {
     APPLICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "신청을 찾을 수 없습니다"),
     PROFILE_INCOMPLETE(HttpStatus.BAD_REQUEST, "신청 전에 프로필(관심사·성향·희망 성향·식사 예산)을 채워 주세요"),
     APPLICATION_CLOSED(HttpStatus.CONFLICT, "신청이 마감된 회차입니다"),
+    PAYMENT_NOT_ALLOWED(HttpStatus.CONFLICT, "결제할 수 없는 신청입니다"),
+    CANCEL_NOT_ALLOWED(HttpStatus.CONFLICT, "취소할 수 없는 신청입니다"),
     DUPLICATE_APPLICATION(HttpStatus.CONFLICT, "이미 신청한 날짜가 있습니다"),
     DINING_TABLE_NOT_FOUND(HttpStatus.NOT_FOUND, "테이블을 찾을 수 없습니다"),
     IMPORT_FAILED(HttpStatus.BAD_REQUEST, "신청자 파일을 읽을 수 없습니다"),

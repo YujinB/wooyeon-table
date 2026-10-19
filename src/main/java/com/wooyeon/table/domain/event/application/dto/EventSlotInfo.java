@@ -14,6 +14,19 @@ public record EventSlotInfo(Long id, LocalDate eventDate, LocalTime startTime, L
                 slot.getStatus());
     }
 
+    /** 이 시각 이후 취소하면 환불되지 않는다 (PAY-02) */
+    public LocalDateTime refundClosesAt() {
+        return EventSlot.refundClosesAt(eventDate);
+    }
+
+    public LocalDateTime reminderAt() {
+        return EventSlot.reminderAt(eventDate);
+    }
+
+    public LocalDateTime startsAt() {
+        return eventDate.atTime(startTime);
+    }
+
     public boolean isOpenForApplication(LocalDateTime now) {
         return isRecruiting() && now.isBefore(matchAt);
     }

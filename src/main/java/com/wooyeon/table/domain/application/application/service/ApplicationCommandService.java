@@ -52,12 +52,45 @@ public class ApplicationCommandService {
                 Application.submit(userId, command.ticketType(), command.regions(), command.slotIds())).getId();
     }
 
+    public void markPaid(Long applicationId) {
+        get(applicationId).markPaid();
+    }
+
+    public void markPaymentFailed(Long applicationId) {
+        get(applicationId).markPaymentFailed();
+    }
+
+    public void cancel(Long applicationId) {
+        get(applicationId).cancel();
+    }
+
+    public void requestRefund(Long applicationId) {
+        get(applicationId).requestRefund();
+    }
+
+    public void startRefund(Long applicationId) {
+        get(applicationId).startRefund();
+    }
+
+    public void completeRefund(Long applicationId) {
+        get(applicationId).completeRefund();
+    }
+
+    public void failRefund(Long applicationId) {
+        get(applicationId).failRefund();
+    }
+
     public void confirmMatch(Collection<Long> applicationIds, Long slotId) {
         applicationRepository.findAllByIdIn(applicationIds).forEach(application -> application.confirmMatch(slotId));
     }
 
     public void offerAlternative(Collection<Long> applicationIds) {
         applicationRepository.findAllByIdIn(applicationIds).forEach(Application::offerAlternative);
+    }
+
+    private Application get(Long applicationId) {
+        return applicationRepository.findById(applicationId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.APPLICATION_NOT_FOUND, String.valueOf(applicationId)));
     }
 
     private void requireOpenSlots(Set<Long> slotIds) {
