@@ -2,6 +2,8 @@ package com.wooyeon.table.domain.chat.presentation;
 
 import com.wooyeon.table.domain.chat.application.dto.ChatRoomView;
 import com.wooyeon.table.domain.chat.application.service.ChatService;
+import com.wooyeon.table.domain.chat.application.service.TableContentService;
+import com.wooyeon.table.domain.chat.domain.service.TableContentGenerator.TableContent;
 import com.wooyeon.table.domain.chat.presentation.request.SendMessageRequest;
 import com.wooyeon.table.global.auth.AuthUser;
 import com.wooyeon.table.global.auth.LoginUser;
@@ -22,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class ChatController {
 
     private final ChatService chatService;
+    private final TableContentService tableContentService;
 
     @GetMapping
     public ApiResponse<List<ChatRoomView.Summary>> myRooms(@LoginUser AuthUser user) {
@@ -32,6 +35,12 @@ public class ChatController {
     @GetMapping("/{roomId}")
     public ApiResponse<ChatRoomView> room(@LoginUser AuthUser user, @PathVariable Long roomId) {
         return ApiResponse.ok(chatService.view(user.userId(), roomId));
+    }
+
+    /** 테이블 맞춤 대화 주제(3~5개, 고른 이유 포함)와 아이스브레이킹 (CON-01·02) */
+    @GetMapping("/{roomId}/content")
+    public ApiResponse<TableContent> content(@LoginUser AuthUser user, @PathVariable Long roomId) {
+        return ApiResponse.ok(tableContentService.forRoom(user.userId(), roomId));
     }
 
     @PostMapping("/{roomId}/messages")
