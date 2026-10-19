@@ -34,6 +34,8 @@ public class EventSlot extends BaseTimeEntity {
      * 신청 마감·자동 매칭도 기본적으로 이 시각에 한다 — 환불이 막히기 직전까지 신청을 받고, 마감하자마자 결과를 알린다
      */
     public static final int REFUND_CLOSE_DAYS_BEFORE = 1;
+    /** 모임 전날 이 시각에 시간·장소·예약명을 안내한다 (INF, W3-2) */
+    public static final LocalTime REMINDER_TIME = LocalTime.NOON;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -73,6 +75,10 @@ public class EventSlot extends BaseTimeEntity {
 
     public static LocalDateTime refundClosesAt(LocalDate eventDate) {
         return eventDate.minusDays(REFUND_CLOSE_DAYS_BEFORE).atStartOfDay();
+    }
+
+    public static LocalDateTime reminderAt(LocalDate eventDate) {
+        return eventDate.minusDays(1).atTime(REMINDER_TIME);
     }
 
     public boolean isRecruiting() {
