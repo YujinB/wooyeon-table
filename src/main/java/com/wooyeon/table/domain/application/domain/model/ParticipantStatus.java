@@ -14,6 +14,8 @@ public enum ParticipantStatus {
     MATCH_WAITING("매칭 대기", "신청 마감 시각에 자동으로 테이블을 만들고 결과를 알려드려요."),
     MATCH_CONFIRMED("매칭 확정", "테이블이 확정됐어요. 모임 전날 낮 12시에 장소와 예약명을 안내해요."),
     MATCH_FAILED("매칭 실패", "고른 날짜에 테이블을 만들지 못했어요. 추천 일정 이동·이용권 보관·환불 중에서 골라 주세요."),
+    TICKET_KEPT("이용권 보관", "보관한 이용권은 다음 신청 때 결제 없이 쓸 수 있어요."),
+    REFUNDED("매칭 실패 · 환불", "매칭에 실패해 결제수단으로 환불했어요."),
     CANCELED("취소", "신청을 취소했어요.");
 
     private final String label;
@@ -26,7 +28,10 @@ public enum ParticipantStatus {
         if (match == MatchStatus.CONFIRMED) {
             return MATCH_CONFIRMED;
         }
-        if (match == MatchStatus.ALTERNATIVE_OFFERED || match == MatchStatus.NO_MATCH) {
+        if (match == MatchStatus.NO_MATCH) {
+            return payment == PaymentStatus.PAID ? TICKET_KEPT : REFUNDED;
+        }
+        if (match == MatchStatus.ALTERNATIVE_OFFERED) {
             return MATCH_FAILED;
         }
         if (payment == PaymentStatus.PENDING) {

@@ -2,6 +2,7 @@ package com.wooyeon.table.global.exception;
 
 import com.wooyeon.table.global.response.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -33,6 +34,14 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ApiResponse<Void>> handleUnreadable(HttpMessageNotReadableException e) {
         ErrorCode code = ErrorCode.INVALID_INPUT;
+        return ResponseEntity.status(code.getStatus()).body(ApiResponse.fail(code.name(), code.getMessage()));
+    }
+
+    /** 유일 제약 위반 = 같은 요청이 동시에 두 번 들어온 경우 (예: 해결 방식 중복 선택) */
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ApiResponse<Void>> handleDuplicate(DataIntegrityViolationException e) {
+        log.warn("유일 제약 위반: {}", e.getMostSpecificCause().getMessage());
+        ErrorCode code = ErrorCode.DUPLICATE_REQUEST;
         return ResponseEntity.status(code.getStatus()).body(ApiResponse.fail(code.name(), code.getMessage()));
     }
 

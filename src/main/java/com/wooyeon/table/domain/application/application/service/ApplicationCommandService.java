@@ -5,6 +5,7 @@ import com.wooyeon.table.domain.application.domain.model.Application;
 import com.wooyeon.table.domain.application.domain.repository.ApplicationRepository;
 import com.wooyeon.table.domain.event.application.dto.EventSlotInfo;
 import com.wooyeon.table.domain.event.application.service.EventSlotQueryService;
+import com.wooyeon.table.domain.profile.domain.model.Region;
 import com.wooyeon.table.domain.profile.application.service.ProfileQueryService;
 import com.wooyeon.table.global.exception.BusinessException;
 import com.wooyeon.table.global.exception.ErrorCode;
@@ -78,6 +79,18 @@ public class ApplicationCommandService {
 
     public void failRefund(Long applicationId) {
         get(applicationId).failRefund();
+    }
+
+    public void moveTo(Long applicationId, Long slotId, Collection<Region> regions) {
+        get(applicationId).moveTo(slotId, regions);
+    }
+
+    public void keepTicket(Long applicationId) {
+        get(applicationId).keepTicket();
+    }
+
+    public void closeForRefund(Long applicationId) {
+        get(applicationId).closeForRefund();
     }
 
     public void confirmMatch(Collection<Long> applicationIds, Long slotId) {
