@@ -55,6 +55,12 @@ public class User extends BaseTimeEntity {
         return new User(loginId, name, UserRole.ADMIN);
     }
 
+    /** 기본 정보 수정 (ACC-02) */
+    public void updateBasicInfo(String name, String phone) {
+        this.name = name;
+        this.phone = phone;
+    }
+
     public void changePasswordHash(String passwordHash) {
         this.passwordHash = passwordHash;
     }
