@@ -92,6 +92,12 @@ public class MatchingQueryService {
     }
 
     /** 참가자용 내 매칭 결과: 확정이면 테이블 요약과 "왜 이 테이블인지", 실패면 사유와 다음 단계 */
+    /** 참가자 본인 신청의 매칭 결과. 다른 사람 신청이면 없는 신청으로 응답한다 */
+    public MyMatchResult getMyResult(Long userId, Long applicationId) {
+        applicationQueryService.getOwnedApplication(userId, applicationId);
+        return getMyResult(applicationId);
+    }
+
     public MyMatchResult getMyResult(Long applicationId) {
         ApplicationInfo application = applicationQueryService.getApplication(applicationId);
         if (application.matchStatus() == MatchStatus.CONFIRMED) {
