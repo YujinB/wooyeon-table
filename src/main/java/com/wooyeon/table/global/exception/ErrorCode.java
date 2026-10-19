@@ -11,6 +11,7 @@ public enum ErrorCode {
     UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "로그인이 필요합니다"),
     LOGIN_FAILED(HttpStatus.UNAUTHORIZED, "아이디 또는 비밀번호가 올바르지 않습니다"),
     FORBIDDEN(HttpStatus.FORBIDDEN, "권한이 없습니다"),
+    PARTICIPATION_RESTRICTED(HttpStatus.FORBIDDEN, "참가가 제한된 계정입니다"),
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다"),
     EVENT_SLOT_NOT_FOUND(HttpStatus.NOT_FOUND, "회차를 찾을 수 없습니다"),
     EVENT_SLOT_ALREADY_EXISTS(HttpStatus.CONFLICT, "그 날짜에 이미 회차가 있습니다"),

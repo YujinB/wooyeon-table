@@ -65,6 +65,7 @@ public class MatchingService {
     private final ApplicationQueryService applicationQueryService;
     private final ApplicationCommandService applicationCommandService;
     private final ProfileQueryService profileQueryService;
+    private final PairRelationsAssembler pairRelationsAssembler;
     private final ApplicationEventPublisher eventPublisher;
     private final Clock clock;
 
@@ -97,8 +98,11 @@ public class MatchingService {
             candidates.add(toCandidate(application, profile, slot));
         }
 
-        // 차단·신고·이전 만남은 피드백 반영(#11)에서 연결한다
-        MatchResult result = matchingEngine.match(candidates, PairRelations.none());
+        // 차단·신고·다시 만나기 싫음(제외)과 이전 만남(새로운 사람 점수)을 반영한다 (MAT-05·06)
+        PairRelations relations = pairRelationsAssembler.assemble(applicationById.values().stream()
+                .collect(Collectors.toMap(MatchCandidateApplication::userId,
+                        MatchCandidateApplication::applicationId, (first, second) -> first)));
+        MatchResult result = matchingEngine.match(candidates, relations);
         LocalDateTime finishedAt = LocalDateTime.now(clock);
 
         List<UnassignedCandidate> carriedOver = new ArrayList<>();
