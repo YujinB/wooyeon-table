@@ -10,8 +10,10 @@ import com.wooyeon.table.domain.payment.application.dto.PaymentResult;
 import com.wooyeon.table.domain.payment.domain.model.Membership;
 import com.wooyeon.table.domain.payment.domain.model.PaymentRecord;
 import com.wooyeon.table.domain.payment.domain.model.PaymentRecordType;
+import com.wooyeon.table.domain.payment.domain.model.TicketCredit;
 import com.wooyeon.table.domain.payment.domain.repository.MembershipRepository;
 import com.wooyeon.table.domain.payment.domain.repository.PaymentRecordRepository;
+import com.wooyeon.table.domain.payment.domain.repository.TicketCreditRepository;
 import com.wooyeon.table.domain.payment.domain.service.PaymentGateway;
 import com.wooyeon.table.domain.payment.domain.service.PaymentGateway.GatewayResult;
 import com.wooyeon.table.global.exception.BusinessException;
@@ -37,6 +39,7 @@ public class PaymentService {
     private final EventSlotQueryService eventSlotQueryService;
     private final PaymentRecordRepository paymentRecordRepository;
     private final MembershipRepository membershipRepository;
+    private final TicketCreditRepository ticketCreditRepository;
     private final PaymentGateway paymentGateway;
     private final Clock clock;
 
@@ -61,6 +64,17 @@ public class PaymentService {
                 applicationCommandService.markPaid(applicationId);
                 return result(applicationId, true, PaymentRecordType.MEMBERSHIP_USE, 0, null,
                         active.get().getExpiresOn());
+            }
+        }
+
+        if (!ticket.isMembership()) {
+            Optional<TicketCredit> credit = ticketCreditRepository.findFirstUnused(userId);
+            if (credit.isPresent()) {
+                credit.get().use(applicationId);
+                paymentRecordRepository.save(PaymentRecord.succeeded(applicationId, userId,
+                        PaymentRecordType.TICKET_CREDIT_USE, 0, "CREDIT-" + credit.get().getId()));
+                applicationCommandService.markPaid(applicationId);
+                return result(applicationId, true, PaymentRecordType.TICKET_CREDIT_USE, 0, null, null);
             }
         }
 
@@ -111,6 +125,19 @@ public class PaymentService {
         applicationCommandService.completeRefund(applicationId);
         membershipRepository.findBySourceApplicationId(applicationId).ifPresent(Membership::cancel);
         return result(applicationId, true, PaymentRecordType.REFUND, charge.getAmount(), null, null);
+    }
+
+    /**
+     * 매칭 실패한 1회권을 보관한다 (STA-05). 신청당 하나만 만들어지고(유일 제약), 다음 1회권 결제 때 0원으로 쓴다.
+     * 멤버십은 실패 시 기간이 이미 늘어났으므로 보관할 것이 없다
+     */
+    public void keepTicket(Long applicationId) {
+        ApplicationInfo application = applicationQueryService.getApplication(applicationId);
+        if (application.ticketType().isMembership()) {
+            return;
+        }
+        ticketCreditRepository.save(TicketCredit.keep(application.userId(), applicationId,
+                application.ticketType().getPrice()));
     }
 
     /** 실제로 결제한 금액이 있는지 (멤버십 사용 0원 신청은 환불할 것이 없다) */
