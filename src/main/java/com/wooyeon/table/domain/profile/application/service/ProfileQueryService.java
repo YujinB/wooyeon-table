@@ -1,6 +1,7 @@
 package com.wooyeon.table.domain.profile.application.service;
 
 import com.wooyeon.table.domain.profile.application.dto.MatchingProfile;
+import com.wooyeon.table.domain.profile.domain.model.Profile;
 import com.wooyeon.table.domain.profile.domain.repository.ProfileRepository;
 import java.util.Collection;
 import java.util.Map;
@@ -16,6 +17,11 @@ import org.springframework.transaction.annotation.Transactional;
 public class ProfileQueryService {
 
     private final ProfileRepository profileRepository;
+
+    /** 신청할 수 있을 만큼 프로필을 채웠는지 (APP-03 필수 항목 확인) */
+    public boolean isCompleteForApplication(Long userId) {
+        return profileRepository.findByUserId(userId).map(Profile::isCompleteForApplication).orElse(false);
+    }
 
     /** 사용자 id → 매칭용 프로필. 프로필이 없는 사용자는 결과에 없다 */
     public Map<Long, MatchingProfile> findMatchingProfiles(Collection<Long> userIds) {

@@ -24,3 +24,10 @@ management:
 matching:
   scheduler:
     enabled: ${MATCHING_SCHEDULER_ENABLED:false}
+
+auth:
+  # 로그인 토큰 서명 키. 배포 환경에서는 반드시 AUTH_TOKEN_SECRET 으로 바꾼다
+  token-secret: ${AUTH_TOKEN_SECRET:local-dev-secret-change-me-please-0123456789}
+  token-ttl-hours: ${AUTH_TOKEN_TTL_HOURS:168}
+  # 데모 계정(admin, demo1~3) 공통 비밀번호
+  demo-password: ${DEMO_PASSWORD:wooyeon1234}

@@ -67,7 +67,7 @@ class ApplicantExcelParserTest {
     @Test
     void 이용권은_1회권만_단건이고_나머지는_다회권() {
         assertThat(ApplicantExcelParser.parseTicket("1회권: ₩8,000")).isEqualTo(TicketType.SINGLE);
-        assertThat(ApplicantExcelParser.parseTicket("3회권 사용 (3회권 결제자 분들만)")).isEqualTo(TicketType.MULTI);
+        assertThat(ApplicantExcelParser.parseTicket("3회권 사용 (3회권 결제자 분들만)")).isEqualTo(TicketType.MEMBERSHIP_1M);
     }
 
     @ParameterizedTest

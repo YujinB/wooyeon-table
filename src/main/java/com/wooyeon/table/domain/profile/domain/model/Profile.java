@@ -91,12 +91,39 @@ public class Profile extends BaseTimeEntity {
         this.foodRestriction = foodRestriction;
     }
 
+    /** 매칭 프로필·식사 조건 수정 (ACC-02~04). 다음 신청에도 그대로 쓰인다 (ACC-06) */
+    public void update(int birthYear, Gender gender, Mbti mbti, String job, Set<Interest> interests,
+                       Set<Trait> traits, Set<PreferredTrait> preferredTraits, Set<MealBudget> mealBudgets,
+                       String foodRestriction) {
+        this.birthYear = birthYear;
+        this.gender = gender;
+        this.mbti = mbti == null ? null : mbti.code();
+        this.job = job;
+        replace(this.interests, interests);
+        replace(this.traits, traits);
+        replace(this.preferredTraits, preferredTraits);
+        replace(this.mealBudgets, mealBudgets);
+        this.foodRestriction = foodRestriction;
+    }
+
+    /** 신청에 필요한 항목(관심사·본인 성향·희망 성향·식사 예산)을 모두 채웠는지 */
+    public boolean isCompleteForApplication() {
+        return !interests.isEmpty() && !traits.isEmpty() && !preferredTraits.isEmpty() && !mealBudgets.isEmpty();
+    }
+
     public int ageIn(int year) {
         return year - birthYear;
     }
 
     public Mbti mbtiValue() {
         return mbti == null ? null : Mbti.of(mbti);
+    }
+
+    private static <E> void replace(Set<E> target, Set<E> source) {
+        target.clear();
+        if (source != null) {
+            target.addAll(source);
+        }
     }
 
     private static <E> Set<E> copy(Set<E> source) {
