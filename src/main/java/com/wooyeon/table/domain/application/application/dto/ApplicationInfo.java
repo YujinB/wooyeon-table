@@ -14,6 +14,11 @@ public record ApplicationInfo(Long id, Long userId, TicketType ticketType, Set<R
                               PaymentStatus paymentStatus, MatchStatus matchStatus, Long confirmedSlotId,
                               LocalDateTime submittedAt) {
 
+    public boolean isPayable() {
+        return applicationStatus == ApplicationStatus.SUBMITTED
+                && (paymentStatus == PaymentStatus.PENDING || paymentStatus == PaymentStatus.FAILED);
+    }
+
     public static ApplicationInfo from(Application application) {
         return new ApplicationInfo(application.getId(), application.getUserId(), application.getTicketType(),
                 Set.copyOf(application.getRegions()), Set.copyOf(application.getPreferredSlotIds()),
