@@ -16,6 +16,7 @@ import FeedbackPage from './app/FeedbackPage';
 import MePage from './app/MePage';
 import AdminLayout from './admin/AdminLayout';
 import DashboardPage from './admin/DashboardPage';
+import ExceptionsPage from './admin/ExceptionsPage';
 import SlotPage from './admin/SlotPage';
 import TablePage from './admin/TablePage';
 
@@ -52,6 +53,7 @@ export default function App() {
       <Route path="/admin/login" element={<LoginPage />} />
       <Route path="/admin" element={<AdminLayout />}>
         <Route index element={<DashboardPage />} />
+        <Route path="exceptions" element={<ExceptionsPage />} />
         <Route path="slots/:slotId" element={<SlotPage />} />
         <Route path="tables/:tableId" element={<TablePage />} />
       </Route>
