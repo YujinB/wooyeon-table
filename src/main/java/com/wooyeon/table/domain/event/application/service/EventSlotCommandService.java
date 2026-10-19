@@ -56,6 +56,12 @@ public class EventSlotCommandService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.EVENT_SLOT_NOT_FOUND, String.valueOf(slotId)));
     }
 
+    public void complete(Long slotId) {
+        eventSlotRepository.findById(slotId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.EVENT_SLOT_NOT_FOUND, String.valueOf(slotId)))
+                .complete();
+    }
+
     @Transactional(propagation = Propagation.MANDATORY)
     public void markMatched(Long slotId) {
         eventSlotRepository.findById(slotId)

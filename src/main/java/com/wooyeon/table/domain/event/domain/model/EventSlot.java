@@ -90,6 +90,15 @@ public class EventSlot extends BaseTimeEntity {
         return isRecruiting() && now.isBefore(matchAt);
     }
 
+    /** 행사 종료 처리. 매칭이 끝난 회차만 */
+    public void complete() {
+        if (status != EventSlotStatus.MATCHED) {
+            throw new BusinessException(ErrorCode.INVALID_STATUS_TRANSITION,
+                    "매칭 완료 회차만 종료 처리: " + id + " (" + status + ")");
+        }
+        this.status = EventSlotStatus.COMPLETED;
+    }
+
     public void markMatched() {
         if (status != EventSlotStatus.RECRUITING) {
             throw new BusinessException(ErrorCode.INVALID_STATUS_TRANSITION, "이미 매칭한 회차: " + id);
