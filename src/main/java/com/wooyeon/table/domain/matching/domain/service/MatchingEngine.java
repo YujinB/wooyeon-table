@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.EnumSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -28,7 +29,8 @@ import java.util.Set;
  * <ol>
  *   <li>인원 적은 지역부터, 나이순으로 가장 어린 사람을 씨앗 삼아 나이 차 이내에서 점수가 가장 오르는 사람을 더한다 (그리디)</li>
  *   <li>남은 사람을 빈자리가 있는 테이블에 넣는다 (같은 날짜 안에서 본인이 고른 다른 지역 포함, PRD 7.4의 1·2순위)</li>
- *   <li>(개선 켜짐) 테이블 간 이동·교환으로 총점을 올리고, 남은 사람을 넣으려고 기존 멤버를 다른 테이블로 밀어낸다</li>
+ *   <li>(개선 켜짐) 테이블 간 이동·교환으로 총점을 올리고, 남은 사람을 넣으려고 기존 멤버를 다른 테이블로 밀어내거나,
+ *       남은 사람끼리 큰 테이블에서 멤버를 빌려 새 테이블을 연다 (분리)</li>
  *   <li>최소 점수 미달 테이블을 하나씩 해제하고 그 멤버를 다시 넣는다</li>
  *   <li>모든 테이블을 필수 조건으로 재검증한다 (MAT-07)</li>
  * </ol>
@@ -86,6 +88,7 @@ public final class MatchingEngine {
         private int moves;
         private int swaps;
         private int dissolvedTables;
+        private int splitTables;
         private int improvementRounds;
 
         private Run(List<Candidate> input, PairRelations relations) {
@@ -367,6 +370,115 @@ public final class MatchingEngine {
             return changed;
         }
 
+        /**
+         * 빈자리에 넣을 수 없는 남은 사람들로 새 테이블을 연다. 남은 사람이 최소 인원보다 적으면
+         * 최소 인원보다 큰 테이블(5·6인)에서 나이 범위가 맞는 멤버를 빌려 채운다 (예: 6인 + 남은 2명 → 4인 + 4인).
+         * 빌려준 테이블도 최소 인원·최소 점수를 지켜야 하고, 새 테이블도 최소 점수 이상이어야 적용한다.
+         */
+        private boolean splitForLeftovers() {
+            boolean changed = false;
+            boolean formed = true;
+            while (formed) {
+                formed = false;
+                for (Region region : Region.values()) {
+                    List<Integer> leftovers = unassignedAccepting(region);
+                    leftovers.sort(Comparator.<Integer>comparingInt(this::age).thenComparingInt(i -> i));
+                    for (int seed : leftovers) {
+                        if (trySplit(seed, leftovers, region)) {
+                            formed = true;
+                            changed = true;
+                            break;
+                        }
+                    }
+                    if (formed) {
+                        break;
+                    }
+                }
+            }
+            return changed;
+        }
+
+        private boolean trySplit(int seed, List<Integer> leftovers, Region region) {
+            List<Integer> members = new ArrayList<>(List.of(seed));
+            while (members.size() < policy.maxTableSize()) {
+                int next = bestJoining(members, leftovers, region);
+                if (next < 0) {
+                    break;
+                }
+                members.add(next);
+            }
+            int leftoverCount = members.size();
+
+            // 빌려준 뒤 남은 멤버 (같은 테이블에서 여러 명을 빌릴 수 있으므로 복사본으로 시뮬레이션)
+            Map<Draft, List<Integer>> remaining = new LinkedHashMap<>();
+            Map<Integer, Draft> lenders = new LinkedHashMap<>();
+            while (members.size() < policy.minTableSize()) {
+                Draft bestTable = null;
+                int bestDonor = -1;
+                double bestGain = Double.NEGATIVE_INFINITY;
+                for (Draft table : tables) {
+                    List<Integer> rest = remaining.getOrDefault(table, table.members);
+                    if (rest.size() <= policy.minTableSize()) {
+                        continue;
+                    }
+                    double before = scorer.total(rest);
+                    for (int donor : rest) {
+                        if (!constraints.canJoin(members, donor, region)) {
+                            continue;
+                        }
+                        double after = scorer.total(without(rest, donor));
+                        if (after + EPSILON < policy.minScore()) {
+                            continue;
+                        }
+                        double gain = scoreWith(members, donor) + after - before;
+                        if (gain > bestGain + EPSILON) {
+                            bestTable = table;
+                            bestDonor = donor;
+                            bestGain = gain;
+                        }
+                    }
+                }
+                if (bestTable == null) {
+                    return false;
+                }
+                remaining.put(bestTable, without(remaining.getOrDefault(bestTable, bestTable.members), bestDonor));
+                lenders.put(bestDonor, bestTable);
+                members.add(bestDonor);
+            }
+            if (scorer.total(members) + EPSILON < policy.minScore()) {
+                return false;
+            }
+
+            lenders.forEach((donor, table) -> {
+                leave(table, donor);
+                markOptimized(donor);
+            });
+            open(region, members);
+            for (int i = 0; i < leftoverCount; i++) {
+                markReallocated(members.get(i));
+            }
+            splitTables++;
+            return true;
+        }
+
+        /** 남은 사람 중 members에 넣었을 때 점수가 가장 높은 사람 (없으면 -1) */
+        private int bestJoining(List<Integer> members, List<Integer> pool, Region region) {
+            int best = -1;
+            double bestScore = Double.NEGATIVE_INFINITY;
+            for (int candidate : pool) {
+                if (tableOf[candidate] != null || members.contains(candidate)
+                        || !constraints.canJoin(members, candidate, region)) {
+                    continue;
+                }
+                double score = scoreWith(members, candidate);
+                if (score > bestScore + EPSILON) {
+                    best = candidate;
+                    bestScore = score;
+                }
+            }
+            return best;
+        }
+
         // ---------- 3. 개선 ----------
 
         private void improve() {
@@ -380,6 +492,7 @@ public final class MatchingEngine {
                 }
                 changed |= reallocateLeftovers();
                 changed |= displaceForLeftovers();
+                changed |= splitForLeftovers();
                 if (!changed) {
                     return;
                 }
@@ -517,7 +630,7 @@ public final class MatchingEngine {
                 }
             }
             MatchStats stats = new MatchStats(count, initialTables, reallocations, displacements, moves, swaps,
-                    dissolvedTables, improvementRounds);
+                    dissolvedTables, improvementRounds, splitTables);
             return new MatchResult(List.copyOf(matched), List.copyOf(unassigned), stats);
         }
 

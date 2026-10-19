@@ -49,7 +49,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class MatchingService {
 
-    public static final String ALGORITHM_VERSION = "greedy-improve-v1";
+    public static final String ALGORITHM_VERSION = "greedy-improve-split-v2";
 
     private final MatchingEngine matchingEngine;
     private final MatchingPolicy matchingPolicy;

@@ -53,6 +53,7 @@ public class MatchRun extends BaseTimeEntity {
     private int swaps;
     private int dissolvedTables;
     private int improvementRounds;
+    private int splitTables;
 
     /** 적용 기준 (최소 점수·가중치) */
     @Column(nullable = false, length = 200)
@@ -78,6 +79,7 @@ public class MatchRun extends BaseTimeEntity {
         this.swaps = stats.swaps();
         this.dissolvedTables = stats.dissolvedTables();
         this.improvementRounds = stats.improvementRounds();
+        this.splitTables = stats.splitTables();
     }
 
     public static MatchRun completed(Long slotId, String algorithmVersion, LocalDateTime startedAt,

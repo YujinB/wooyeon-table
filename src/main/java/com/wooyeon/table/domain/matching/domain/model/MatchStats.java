@@ -10,6 +10,7 @@ package com.wooyeon.table.domain.matching.domain.model;
  * @param swaps             개선 단계 교환 횟수
  * @param dissolvedTables   최소 점수 미달로 해제한 테이블 수
  * @param improvementRounds 개선 단계 반복 횟수
+ * @param splitTables       남은 사람으로 큰 테이블의 멤버를 빌려 새로 연 테이블 수
  */
 public record MatchStats(
         int candidateCount,
@@ -19,6 +20,7 @@ public record MatchStats(
         int moves,
         int swaps,
         int dissolvedTables,
-        int improvementRounds
+        int improvementRounds,
+        int splitTables
 ) {
 }
