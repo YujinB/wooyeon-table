@@ -139,8 +139,9 @@ public final class ApplicantExcelParser {
         return List.copyOf(dates);
     }
 
+    /** "1회권" 외의 응답(기존 3회권 등)은 기간 정보가 없어 가장 짧은 멤버십 1개월로 본다 */
     public static TicketType parseTicket(String raw) {
-        return raw.startsWith("1회권") ? TicketType.SINGLE : TicketType.MULTI;
+        return raw.startsWith("1회권") ? TicketType.SINGLE : TicketType.MEMBERSHIP_1M;
     }
 
     /** "없음/없습니다/X/아니요" 같은 짧은 답은 빈 값. 그 외는 원문 그대로 둔다 ("없음(해산물불호..)"처럼 정보가 붙은 답 포함) */
