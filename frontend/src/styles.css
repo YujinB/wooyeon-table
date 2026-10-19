@@ -157,6 +157,9 @@ button { font-family: inherit; }
 
 .field { display: block; margin-bottom: 14px; }
 .field > span { display: block; font-size: 13px; font-weight: 700; color: var(--muted); margin-bottom: 6px; }
+.field .required { color: var(--danger); font-style: normal; margin-left: 3px; }
+.field .field-error { display: block; color: var(--danger); font-size: 12px; margin-top: 5px; }
+.field.invalid .input { border-color: var(--danger); }
 .input, select.input, textarea.input {
   width: 100%;
   border: 1px solid var(--line);

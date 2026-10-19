@@ -34,3 +34,12 @@ const TONE: Record<string, string> = {
 export function statusTone(status: string): string {
   return TONE[status] ?? '';
 }
+
+/** 입력 중인 휴대전화 번호를 010-1234-5678 꼴로 (숫자만 남기고 최대 11자리) */
+export function formatPhone(value: string): string {
+  const digits = value.replace(/\D/g, '').slice(0, 11);
+  if (digits.length < 4) return digits;
+  if (digits.length < 8) return `${digits.slice(0, 3)}-${digits.slice(3)}`;
+  if (digits.length === 10) return `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`;
+  return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`;
+}

@@ -32,8 +32,15 @@ public record UpdateMyProfileRequest(
 
     public MyProfileCommand toCommand() {
         Mbti parsed = mbti == null || mbti.isBlank() ? null : Mbti.of(mbti.toUpperCase(Locale.ROOT));
-        return new MyProfileCommand(name.strip(), phone.strip(), birthYear, gender, blankToNull(job), parsed,
+        return new MyProfileCommand(name.strip(), normalizePhone(phone), birthYear, gender, blankToNull(job), parsed,
                 interests, traits, preferredTraits, mealBudgets, blankToNull(foodRestriction));
+    }
+
+    /** 하이픈 유무와 상관없이 010-1234-5678(10자리는 011-123-4567) 꼴로 저장 */
+    static String normalizePhone(String phone) {
+        String digits = phone.replaceAll("\\D", "");
+        int middle = digits.length() == 10 ? 6 : 7;
+        return digits.substring(0, 3) + "-" + digits.substring(3, middle) + "-" + digits.substring(middle);
     }
 
     private static String blankToNull(String value) {

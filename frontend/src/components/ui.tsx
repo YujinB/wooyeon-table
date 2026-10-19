@@ -51,11 +51,17 @@ export function SingleChips({ options, value, onChange }: {
   );
 }
 
-export function Field({ label, children }: { label: string; children: ReactNode }) {
+export function Field({ label, children, required, error }: {
+  label: string;
+  children: ReactNode;
+  required?: boolean;
+  error?: string | null;
+}) {
   return (
-    <label className="field">
-      <span>{label}</span>
+    <label className={`field ${error ? 'invalid' : ''}`} data-invalid={error ? true : undefined}>
+      <span>{label}{required && <em className="required" aria-label="필수">*</em>}</span>
       {children}
+      {error && <small className="field-error">{error}</small>}
     </label>
   );
 }
