@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { api, errorText } from '../api/client';
 import {
-  AdminAttendance, SLOT_STATUS_LABEL, SlotApplicant, SlotFeedbackSummary, SlotMatchingResult,
+  AdminAttendance, slotStatusView, SlotApplicant, SlotFeedbackSummary, SlotMatchingResult,
 } from '../api/adminTypes';
 import { ErrorBox, Loading } from '../components/ui';
 import { dateTime, day, statusTone } from '../format';
@@ -44,7 +44,9 @@ export default function SlotPage() {
           <div className="crumb"><Link to="/admin">대시보드</Link> ›</div>
           <h1 className="h1">{day(r.eventDate)} 회차</h1>
           <p className="muted" style={{ margin: 0 }}>
-            <span className="pill">{SLOT_STATUS_LABEL[r.slotStatus]}</span> 매칭 마감 {dateTime(r.matchAt)}
+            <span className={`pill ${slotStatusView(r.slotStatus, r.matchAt).tone}`}>
+              {slotStatusView(r.slotStatus, r.matchAt).label}
+            </span> 매칭 마감 {dateTime(r.matchAt)}
           </p>
         </div>
         <div className="row" style={{ flexWrap: 'wrap' }}>
