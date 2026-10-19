@@ -226,6 +226,7 @@ button { font-family: inherit; }
 .kv dt { color: var(--muted); }
 .kv dd { margin: 0; }
 .center { text-align: center; }
+.nowrap { white-space: nowrap; }
 .spacer { height: 12px; }
 .loading { text-align: center; color: var(--muted); padding: 40px 0; }
 
