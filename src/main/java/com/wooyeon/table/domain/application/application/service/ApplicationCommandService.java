@@ -10,6 +10,7 @@ import com.wooyeon.table.domain.notification.application.service.NotificationSer
 import com.wooyeon.table.domain.notification.domain.model.NotificationType;
 import com.wooyeon.table.domain.profile.application.service.ProfileQueryService;
 import com.wooyeon.table.domain.safety.application.service.EligibilityService;
+import com.wooyeon.table.domain.user.application.service.UserQueryService;
 import com.wooyeon.table.global.exception.BusinessException;
 import com.wooyeon.table.global.exception.ErrorCode;
 import java.time.Clock;
@@ -39,6 +40,7 @@ public class ApplicationCommandService {
     private final EventSlotQueryService eventSlotQueryService;
     private final NotificationService notificationService;
     private final EligibilityService eligibilityService;
+    private final UserQueryService userQueryService;
     private final Clock clock;
 
     public Long save(Application application) {
@@ -51,6 +53,9 @@ public class ApplicationCommandService {
      */
     public Long submit(Long userId, SubmitApplicationCommand command) {
         eligibilityService.requireEligible(userId);
+        if (!userQueryService.hasConsented(userId)) {
+            throw new BusinessException(ErrorCode.CONSENT_REQUIRED);
+        }
         if (!profileQueryService.isCompleteForApplication(userId)) {
             throw new BusinessException(ErrorCode.PROFILE_INCOMPLETE);
         }
