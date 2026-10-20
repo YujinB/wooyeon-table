@@ -19,6 +19,9 @@ public interface ApplicationRepository {
 
     boolean existsByUserId(Long userId);
 
+    /** 그 회차를 고른 신청이 하나라도 있는지 (취소 포함) */
+    boolean existsBySlotId(Long slotId);
+
     /** 신청 완료 이후의 모든 신청 (운영 현황 집계용) */
     List<Application> findAllSubmitted();
 

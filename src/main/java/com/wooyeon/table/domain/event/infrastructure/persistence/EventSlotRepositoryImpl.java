@@ -23,6 +23,11 @@ public class EventSlotRepositoryImpl implements EventSlotRepository {
     }
 
     @Override
+    public void delete(EventSlot slot) {
+        jpaRepository.delete(slot);
+    }
+
+    @Override
     public Optional<EventSlot> findById(Long id) {
         return jpaRepository.findById(id);
     }

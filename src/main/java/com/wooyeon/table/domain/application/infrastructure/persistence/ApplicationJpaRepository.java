@@ -30,5 +30,8 @@ public interface ApplicationJpaRepository extends JpaRepository<Application, Lon
 
     boolean existsByUserId(Long userId);
 
+    @Query("select count(a) > 0 from Application a join a.preferredSlotIds slotId where slotId = :slotId")
+    boolean existsBySlotId(Long slotId);
+
     List<Application> findAllByUserIdOrderByIdDesc(Long userId);
 }

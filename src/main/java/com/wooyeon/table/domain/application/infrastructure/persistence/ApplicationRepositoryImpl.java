@@ -57,4 +57,9 @@ public class ApplicationRepositoryImpl implements ApplicationRepository {
     public boolean existsByUserId(Long userId) {
         return jpaRepository.existsByUserId(userId);
     }
+
+    @Override
+    public boolean existsBySlotId(Long slotId) {
+        return jpaRepository.existsBySlotId(slotId);
+    }
 }

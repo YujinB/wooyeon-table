@@ -11,6 +11,8 @@ public interface EventSlotRepository {
 
     EventSlot save(EventSlot slot);
 
+    void delete(EventSlot slot);
+
     Optional<EventSlot> findById(Long id);
 
     /** 같은 회차 매칭이 동시에 두 번 돌지 않도록 행 잠금으로 조회한다 */
