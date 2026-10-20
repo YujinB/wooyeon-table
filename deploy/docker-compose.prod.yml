@@ -1,0 +1,68 @@
+# 배포: EC2 한 대에서 MySQL + 백엔드 + nginx(프론트 서빙, /api 프록시)
+# jar와 프론트 빌드 결과는 deploy.sh가 로컬에서 만들어 올린다 (작은 인스턴스에서 빌드하지 않게)
+# 실행: docker compose -f docker-compose.prod.yml --env-file .env up -d
+services:
+  mysql:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: wooyeon
+      MYSQL_USER: wooyeon
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      TZ: Asia/Seoul
+    # 메모리 1~2GB 인스턴스에 맞춰 줄임
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --innodb-buffer-pool-size=128M
+      - --performance-schema=OFF
+      - --max-connections=50
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uwooyeon -p$$MYSQL_PASSWORD"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  backend:
+    image: eclipse-temurin:21-jre
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    working_dir: /app
+    command: ["java", "-Xms128m", "-Xmx384m", "-jar", "/app/app.jar"]
+    environment:
+      TZ: Asia/Seoul
+      DB_URL: jdbc:mysql://mysql:3306/wooyeon?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+      DB_USERNAME: wooyeon
+      DB_PASSWORD: ${DB_PASSWORD}
+      AUTH_TOKEN_SECRET: ${AUTH_TOKEN_SECRET}
+      DEMO_PASSWORD: ${DEMO_PASSWORD}
+      # 운영처럼: 마감 시각 자동 매칭, 행사 4시간 뒤 자동 종료·후기 리마인드
+      MATCHING_SCHEDULER_ENABLED: "true"
+      EVENT_AUTO_CLOSE_ENABLED: "true"
+      # 심사 기간에 확정 직후 체크인까지 보여 줄 수 있게 (운영은 false)
+      ATTENDANCE_CHECK_IN_ANYTIME: "true"
+      # 빈 DB에서 처음 한 번만 시연 데이터
+      DEMO_SEED_ENABLED: "true"
+      DEMO_APPLICANTS_FILE: /app/data/applicants.xlsx
+    volumes:
+      - ./app.jar:/app/app.jar:ro
+      - ./data:/app/data:ro
+
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./dist:/usr/share/nginx/html:ro
+
+volumes:
+  mysql-data:
