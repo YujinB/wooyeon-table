@@ -18,6 +18,7 @@ import com.wooyeon.table.domain.feedback.application.service.FeedbackService;
 import com.wooyeon.table.domain.matching.application.dto.ConfirmedTable;
 import com.wooyeon.table.domain.matching.application.service.MatchingQueryService;
 import com.wooyeon.table.domain.matching.application.service.MatchingService;
+import com.wooyeon.table.domain.payment.application.service.PaymentSeedService;
 import com.wooyeon.table.domain.profile.application.service.ProfileCommandService;
 import com.wooyeon.table.domain.profile.domain.model.Gender;
 import com.wooyeon.table.domain.profile.domain.model.Interest;
@@ -104,6 +105,7 @@ public class DemoSeedService {
     private final EventCloseService eventCloseService;
     private final FeedbackService feedbackService;
     private final SafetyService safetyService;
+    private final PaymentSeedService paymentSeedService;
 
     private int sequence;
 
@@ -153,7 +155,8 @@ public class DemoSeedService {
             }
             thursday = thursday.plusWeeks(1);
         }
-        log.info("데모 시드 완료: 시드 참가자 {}명, 다가오는 회차 {}개", sequence, UPCOMING_SLOTS);
+        int charges = paymentSeedService.fillMissingCharges();
+        log.info("데모 시드 완료: 시드 참가자 {}명, 다가오는 회차 {}개, 모의 결제 기록 {}건", sequence, UPCOMING_SLOTS, charges);
         return true;
     }
 
