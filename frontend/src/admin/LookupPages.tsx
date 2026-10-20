@@ -70,7 +70,7 @@ export function PaymentsPage() {
         <button className={`chip ${failedOnly ? 'on' : ''}`} onClick={() => setFailedOnly(true)}>실패 {failed.length}</button>
       </div>
       {rows.length === 0 ? <div className="alert info">내역이 없어요</div> : (
-        <div className="table-wrap sticky-head">
+        <div className="table-wrap">
           <table className="data">
             <thead>
               <tr><th>시각</th><th>이름</th><th>종류</th><th className="num">금액</th><th>결과</th><th>신청</th></tr>
@@ -125,7 +125,7 @@ export function NotificationsLogPage() {
         ))}
       </div>
       {rows.length === 0 ? <div className="alert info">내역이 없어요</div> : (
-        <div className="table-wrap sticky-head">
+        <div className="table-wrap">
           <table className="data">
             <thead>
               <tr><th>예약 시각</th><th>받는 사람</th><th>알림</th><th>상태</th><th className="num">시도</th><th>발송 시각</th></tr>
