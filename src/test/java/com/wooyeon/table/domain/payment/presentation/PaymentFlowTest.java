@@ -1,6 +1,7 @@
 package com.wooyeon.table.domain.payment.presentation;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.hasItem;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -17,6 +18,7 @@ import com.wooyeon.table.domain.payment.application.service.PaymentService;
 import com.wooyeon.table.domain.payment.domain.model.PaymentRecordType;
 import com.wooyeon.table.support.IntegrationTest;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
@@ -99,6 +101,16 @@ class PaymentFlowTest {
                 .andExpect(jsonPath("$.data.type").value(PaymentRecordType.MEMBERSHIP_USE.name()))
                 .andExpect(jsonPath("$.data.amount").value(0))
                 .andExpect(jsonPath("$.data.paymentStatus").value("PAID"));
+
+        // 내 이용권 (RET-03): 산 신청 + 0원 신청 = 2회 사용, 남은 기간
+        String membership = "$.data.memberships[?(@.sourceApplicationId == " + first + ")]";
+        mockMvc.perform(authed(get("/api/app/me/tickets"), token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath(membership + ".usedCount").value(hasItem(2)))
+                .andExpect(jsonPath(membership + ".active").value(hasItem(true)))
+                .andExpect(jsonPath(membership + ".expiresOn").value(hasItem(LocalDate.now().plusMonths(1).toString())))
+                .andExpect(jsonPath(membership + ".daysLeft").value(hasItem(
+                        (int) ChronoUnit.DAYS.between(LocalDate.now(), LocalDate.now().plusMonths(1)))));
     }
 
     @Test

@@ -15,6 +15,7 @@ type Tab = 'matching' | 'applicants' | 'attendance' | 'feedback';
 /** 회차 운영: 데모용 실행 버튼, 매칭 결과 (MAT-12), 신청자, 참석, 후기 요약 */
 export default function SlotPage() {
   const { slotId } = useParams();
+  const navigate = useNavigate();
   const result = useApi<SlotMatchingResult>(`/api/admin/slots/${slotId}/matching`);
   const [tab, setTab] = useState<Tab>('matching');
   const [busy, setBusy] = useState(false);
@@ -37,6 +38,18 @@ export default function SlotPage() {
     }
   };
 
+  // 잘못 만든 회차 지우기: 신청자가 있으면 서버가 거절하고, 지우면 보낸 모집 알림도 거둬들인다
+  const removeSlot = async () => {
+    setBusy(true);
+    try {
+      await api.delete(`/api/admin/slots/${slotId}`);
+      navigate('/admin', { replace: true });
+    } catch (e) {
+      setMessage({ ok: false, text: errorText(e) });
+      setBusy(false);
+    }
+  };
+
   return (
     <div>
       <div className="admin-head">
@@ -50,6 +63,10 @@ export default function SlotPage() {
           </p>
         </div>
         <div className="row" style={{ flexWrap: 'wrap' }}>
+          {r.slotStatus === 'RECRUITING' && (
+            <ConfirmButton label="회차 삭제" confirmLabel="신청자 없을 때만 — 한 번 더 누르면 삭제"
+              className="btn btn-ghost btn-sm" disabled={busy} onConfirm={removeSlot} />
+          )}
           {r.slotStatus === 'RECRUITING' && (
             <ConfirmButton label="지금 마감 실행" disabled={busy}
               onConfirm={() => run(`/api/admin/slots/${slotId}/match-run`,

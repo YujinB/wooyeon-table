@@ -1,6 +1,7 @@
 package com.wooyeon.table.domain.payment.domain.repository;
 
 import com.wooyeon.table.domain.payment.domain.model.TicketCredit;
+import java.util.List;
 import java.util.Optional;
 
 public interface TicketCreditRepository {
@@ -9,4 +10,7 @@ public interface TicketCreditRepository {
 
     /** 가장 먼저 보관한, 아직 쓰지 않은 보관 이용권 */
     Optional<TicketCredit> findFirstUnused(Long userId);
+
+    /** 아직 쓰지 않은 보관 이용권 (보관한 순서대로) */
+    List<TicketCredit> findAllUnused(Long userId);
 }

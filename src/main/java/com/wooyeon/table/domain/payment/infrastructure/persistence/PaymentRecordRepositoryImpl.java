@@ -26,4 +26,9 @@ public class PaymentRecordRepositoryImpl implements PaymentRecordRepository {
     public List<PaymentRecord> findRecent() {
         return jpaRepository.findTop500ByOrderByIdDesc();
     }
+
+    @Override
+    public long countSucceededByTransactionId(String transactionId) {
+        return jpaRepository.countByTransactionIdAndSuccessTrue(transactionId);
+    }
 }

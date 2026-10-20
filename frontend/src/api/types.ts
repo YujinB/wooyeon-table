@@ -81,6 +81,15 @@ export interface RefundPolicy { summary: string; rules: string[] }
 
 export interface Eligibility { eligible: boolean; level: string | null; reason: string | null; until: string | null }
 
+/** 내 이용권 (RET-03) */
+export interface MyTickets {
+  memberships: {
+    membershipId: number; sourceApplicationId: number; ticketLabel: string; startsOn: string; expiresOn: string;
+    daysLeft: number; extendedCount: number; usedCount: number; active: boolean;
+  }[];
+  credits: { creditId: number; sourceApplicationId: number; amount: number; keptOn: string }[];
+}
+
 export interface LoginResult { token: string; userId: number; name: string; role: 'PARTICIPANT' | 'ADMIN' }
 
 export const TICKETS = [

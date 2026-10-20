@@ -29,6 +29,11 @@ public class NotificationRepositoryImpl implements NotificationRepository {
     }
 
     @Override
+    public int deleteByDedupKeyPrefix(String prefix) {
+        return jpaRepository.deleteByDedupKeyStartingWith(prefix);
+    }
+
+    @Override
     public Optional<Notification> findById(Long id) {
         return jpaRepository.findById(id);
     }

@@ -1,18 +1,19 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { session } from '../api/client';
-import { Eligibility, MyHistory, MyProfile } from '../api/types';
+import { Eligibility, MyHistory, MyProfile, MyTickets } from '../api/types';
 import { Icon } from '../components/Icon';
 import { Loading } from '../components/ui';
-import { dateTime, day } from '../format';
+import { dateTime, day, won } from '../format';
 import { useApi } from '../useApi';
 
-/** 내 정보: 프로필, 이용 제한 여부 (SAF-02), 참가 이력 (RET-01), 다음 일정 추천 (RET-02) */
+/** 내 정보: 프로필, 이용 제한 여부 (SAF-02), 내 이용권 (RET-03), 참가 이력 (RET-01), 다음 일정 추천 (RET-02) */
 export default function MePage() {
   const navigate = useNavigate();
   const user = session.user();
   const profile = useApi<MyProfile>('/api/app/me/profile');
   const eligibility = useApi<Eligibility>('/api/app/me/eligibility');
   const history = useApi<MyHistory>('/api/app/me/history');
+  const tickets = useApi<MyTickets>('/api/app/me/tickets');
 
   const logout = () => {
     session.clear();
@@ -47,6 +48,39 @@ export default function MePage() {
           <Icon name="bell" /><span style={{ flex: 1 }}>알림</span><Icon name="chevron" size={18} />
         </Link>
       </div>
+
+      <p className="section-title">내 이용권</p>
+      {!tickets.data ? <Loading /> : tickets.data.memberships.length + tickets.data.credits.length === 0 ? (
+        <p className="muted small">가진 이용권이 없어요. 신청할 때 1회권이나 멤버십을 고를 수 있어요.</p>
+      ) : (
+        <div className="card" style={{ padding: '4px 16px' }}>
+          {tickets.data.memberships.map((m) => (
+            <div key={m.membershipId} className="list-item">
+              <Icon name="ticket" />
+              <div style={{ flex: 1 }}>
+                <b>{m.ticketLabel}</b>
+                <div className="small muted">
+                  {m.startsOn.replace(/-/g, '.')} ~ {m.expiresOn.replace(/-/g, '.')} · {m.usedCount}회 사용
+                  {m.extendedCount > 0 && ` · 매칭 실패로 ${m.extendedCount * 7}일 연장`}
+                </div>
+              </div>
+              {m.active
+                ? <span className="pill ok">{m.daysLeft === 0 ? '오늘까지' : `${m.daysLeft}일 남음`}</span>
+                : <span className="pill gray">기간 끝남</span>}
+            </div>
+          ))}
+          {tickets.data.credits.length > 0 && (
+            <div className="list-item">
+              <Icon name="refund" />
+              <div style={{ flex: 1 }}>
+                <b>보관한 1회권 {tickets.data.credits.length}장</b>
+                <div className="small muted">다음 1회권 신청 때 결제 없이 써요 · {won(tickets.data.credits[0].amount)}</div>
+              </div>
+              <span className="pill ok">사용 가능</span>
+            </div>
+          )}
+        </div>
+      )}
 
       <p className="section-title">다음 일정 추천</p>
       {!history.data ? <Loading /> : history.data.recommendations.length === 0 ? (

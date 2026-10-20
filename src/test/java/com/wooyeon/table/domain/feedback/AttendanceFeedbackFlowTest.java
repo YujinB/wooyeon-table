@@ -13,6 +13,7 @@ import com.wooyeon.table.domain.application.infrastructure.persistence.Applicati
 import com.wooyeon.table.domain.chat.application.dto.TableMember;
 import com.wooyeon.table.domain.chat.application.service.ChatMemberQueryService;
 import com.wooyeon.table.domain.event.application.service.EventSlotCommandService;
+import com.wooyeon.table.domain.event.application.service.SlotDeletionService;
 import com.wooyeon.table.domain.event.application.service.EventSlotQueryService;
 import com.wooyeon.table.domain.feedback.application.dto.AttendanceView;
 import com.wooyeon.table.domain.feedback.application.service.EventCloseService;
@@ -92,6 +93,8 @@ class AttendanceFeedbackFlowTest {
     private HistoryService historyService;
     @Autowired
     private EventSlotCommandService eventSlotCommandService;
+    @Autowired
+    private SlotDeletionService slotDeletionService;
     @Autowired
     private EventSlotQueryService eventSlotQueryService;
     @Autowired
@@ -240,6 +243,11 @@ class AttendanceFeedbackFlowTest {
                 .isTrue();
         assertThat(notificationRepository.existsByDedupKey("NEXT_SLOT_OPENED:" + opened + ":" + members.get(2).userId()))
                 .as("참석 이력 없음").isFalse();
+
+        // 잘못 만든 회차를 지우면 보낸 모집 알림도 거둬들인다
+        slotDeletionService.delete(opened);
+        assertThat(notificationRepository.existsByDedupKey("NEXT_SLOT_OPENED:" + opened + ":" + members.get(0).userId()))
+                .isFalse();
     }
 
     private ResultActions attendance(int seat, String action) throws Exception {

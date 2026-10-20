@@ -12,6 +12,9 @@ public interface NotificationRepository {
 
     boolean existsByDedupKey(String dedupKey);
 
+    /** 중복 방지 키가 이 값으로 시작하는 알림을 지운다. 지운 수 */
+    int deleteByDedupKeyPrefix(String prefix);
+
     Optional<Notification> findById(Long id);
 
     /** 앱 알림함: 예약 시각이 지난 알림 (푸시 성공 여부와 무관, 최근 것부터) */

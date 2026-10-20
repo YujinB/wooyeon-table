@@ -1,10 +1,11 @@
-import { FormEvent, useState } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { api, errorText } from '../api/client';
 import { Dashboard, SlotOverview, slotStartsAt, slotStatusView } from '../api/adminTypes';
 import { ErrorBox, Loading } from '../components/ui';
 import { dateTime, day, time } from '../format';
 import { useApi } from '../useApi';
+import { ConfirmButton } from './ConfirmButton';
 import { Pagination, usePaged } from './Pagination';
 
 /** 운영 대시보드: 처리할 예외 건수와 회차별 신청·결제·매칭 현황 */
@@ -20,9 +21,10 @@ export default function DashboardPage() {
   const upcoming = slots.filter((s) => slotStartsAt(s.eventDate, s.startTime) > now).reverse();
   const past = slots.filter((s) => slotStartsAt(s.eventDate, s.startTime) <= now);
 
-  // 회차 생성: 목요일 19:30, 매칭(신청) 마감은 전날 0시(화요일 24:00)가 기본값
-  const createSlot = async (event: FormEvent) => {
-    event.preventDefault();
+  // 회차 생성: 목요일 19:30, 매칭(신청) 마감은 전날 0시(화요일 24:00)가 기본값. 만들면 지난 참가자에게 모집 알림이 간다
+  const picked = eventDate ? new Date(`${eventDate}T00:00:00`) : null;
+  const notThursday = picked !== null && picked.getDay() !== 4;
+  const createSlot = async () => {
     try {
       await api.post('/api/admin/slots', { eventDate });
       setEventDate('');
@@ -46,11 +48,20 @@ export default function DashboardPage() {
           <h1 className="h1">운영 대시보드</h1>
           <p className="muted" style={{ margin: 0 }}>매칭·식당·단체방·안내는 자동으로 처리돼요. 아래 예외만 확인하면 됩니다.</p>
         </div>
-        <form className="row" onSubmit={createSlot}>
-          <input className="input" type="date" value={eventDate} onChange={(e) => setEventDate(e.target.value)}
-            style={{ width: 170 }} aria-label="행사 날짜" />
-          <button className="btn btn-primary btn-sm" disabled={!eventDate}>회차 만들기</button>
-        </form>
+        <div>
+          <div className="row">
+            <input className="input" type="date" value={eventDate} onChange={(e) => setEventDate(e.target.value)}
+              style={{ width: 170 }} aria-label="행사 날짜 (목요일)" />
+            <ConfirmButton label="회차 만들기" confirmLabel="모집 알림이 가요 — 한 번 더 누르면 생성"
+              disabled={!eventDate || notThursday} onConfirm={createSlot} />
+          </div>
+          <p className={`small ${notThursday ? '' : 'muted'}`}
+            style={{ margin: '6px 0 0', color: notThursday ? 'var(--danger)' : undefined }}>
+            {notThursday ? '모임은 목요일이에요. 목요일을 골라 주세요'
+              : picked ? `${day(eventDate)} 19:30 시작 · 신청·매칭 마감 전날 0시`
+                : '목요일 19:30 모임, 신청·매칭 마감은 전날 0시'}
+          </p>
+        </div>
       </div>
       <ErrorBox message={createError} />
 
