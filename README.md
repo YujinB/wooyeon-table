@@ -188,6 +188,17 @@ cd frontend && npm install && npm run dev
 
 로컬은 스케줄러를 꺼 두고 운영자 화면의 "지금 마감 실행"·"행사 종료 처리"로 시연하고, 배포에서는 켭니다.
 
+### 배포 (EC2 한 대)
+
+`deploy/` 폴더: MySQL + 백엔드 + nginx(프론트 서빙·`/api` 프록시)를 Docker Compose로 띄웁니다. 작은 인스턴스에서 빌드하지 않도록 jar와 프론트 빌드 결과는 로컬에서 만들어 올립니다.
+
+```bash
+cp deploy/.env.example deploy/.env   # DB 비밀번호·토큰 키·데모 비밀번호 채우기
+deploy/deploy.sh <EC2 공인 IP> <pem 키 경로>
+```
+
+처음 실행하면 서버에 Docker와 스왑 2GB를 설치하고, 빈 DB에 데모 시드를 넣은 뒤 자동 매칭·자동 종료 스케줄러를 켠 채로 뜹니다.
+
 ---
 
 ## 테스트

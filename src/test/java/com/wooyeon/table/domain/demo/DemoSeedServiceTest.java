@@ -115,6 +115,10 @@ class DemoSeedServiceTest {
             assertThat(feedbackService.form(demo2, entry.applicationId()).submittable()).isTrue();
         });
 
+        // 결제 완료로 넣은 신청에는 모의 결제 기록이 있음 (운영자 결제·환불 화면)
+        assertThat(operationQueryService.payments()).hasSizeGreaterThanOrEqualTo(90)
+                .allSatisfy(row -> assertThat(row.payment().success()).isTrue());
+
         // 체험참가자1~3은 바로 신청 가능, 4~5는 프로필부터
         assertThat(DEMO).extracting(loginId -> profileQueryService.isCompleteForApplication(
                         userCommandService.createParticipantIfAbsent(loginId, loginId)))
