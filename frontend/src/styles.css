@@ -390,7 +390,12 @@ table.data tr:last-child td { border-bottom: 0; }
 table.data tr.link { cursor: pointer; }
 table.data tr.link:hover td { background: var(--surface); }
 table.data .num { text-align: right; font-variant-numeric: tabular-nums; }
-.table-wrap { border: 1px solid var(--line); border-radius: 14px; overflow-x: auto; }
+.table-wrap { border: 1px solid var(--line); border-radius: 14px; overflow-x: auto; scroll-margin-top: 16px; }
+/* 긴 표: 내려도 머리줄이 화면 위에 붙어 있게. 가로 스크롤 상자 안에서는 sticky가 안 먹어서 넓은 화면에서만 */
+@media (min-width: 761px) {
+  .table-wrap.sticky-head { overflow: clip; }
+  .table-wrap.sticky-head th { position: sticky; top: 0; z-index: 1; box-shadow: 0 1px 0 var(--line); }
+}
 .bar { height: 8px; border-radius: 4px; background: var(--brand-soft); overflow: hidden; }
 .bar > div { height: 100%; background: var(--brand); }
 .score-row { display: grid; grid-template-columns: 110px 1fr 70px; gap: 10px; align-items: center; font-size: 14px; }
