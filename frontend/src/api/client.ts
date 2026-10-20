@@ -68,6 +68,7 @@ export const api = {
   get: <T>(path: string) => request<T>('GET', path),
   post: <T>(path: string, body?: unknown) => request<T>('POST', path, body ?? {}),
   put: <T>(path: string, body: unknown) => request<T>('PUT', path, body),
+  delete: <T>(path: string) => request<T>('DELETE', path),
 };
 
 /** 서버 메시지 "코드 설명: 상세"에서 사람이 읽을 부분 */
