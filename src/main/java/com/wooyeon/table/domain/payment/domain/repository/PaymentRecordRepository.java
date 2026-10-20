@@ -12,4 +12,7 @@ public interface PaymentRecordRepository {
 
     /** 최근 결제·환불 내역 (최신부터, 운영자 조회) */
     List<PaymentRecord> findRecent();
+
+    /** 거래 번호가 같은 성공 기록 수 (멤버십으로 0원 처리한 신청 수 세기) */
+    long countSucceededByTransactionId(String transactionId);
 }
