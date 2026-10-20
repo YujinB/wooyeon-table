@@ -19,7 +19,8 @@ echo "[1/4] 백엔드·프론트 빌드"
 
 echo "[2/4] 서버 준비 (처음이면 Docker·스왑 설치)"
 "${SCP[@]}" "$DIR/deploy/setup-ec2.sh" "$REMOTE:~/setup-ec2.sh"
-"${SSH[@]}" "sed -i 's/$//' ~/setup-ec2.sh && bash ~/setup-ec2.sh"
+# 윈도우에서 올린 파일이면 줄 끝의 CR을 지우고 실행
+"${SSH[@]}" "tr -d '\\r' < ~/setup-ec2.sh > ~/setup.sh && bash ~/setup.sh"
 
 echo "[3/4] 파일 올리기"
 "${SSH[@]}" "mkdir -p ~/wooyeon/data && rm -rf ~/wooyeon/dist"
@@ -31,6 +32,6 @@ if [ -f "$DIR/data/applicants.xlsx" ]; then
 fi
 
 echo "[4/4] 컨테이너 재시작"
-"${SSH[@]}" "cd ~/wooyeon && sudo docker compose -f docker-compose.prod.yml --env-file .env up -d --force-recreate backend nginx mysql && sudo docker compose -f docker-compose.prod.yml ps"
+"${SSH[@]}" "cd ~/wooyeon && sed -i 's/\\r\$//' .env docker-compose.prod.yml nginx.conf && sudo docker compose -f docker-compose.prod.yml --env-file .env up -d --force-recreate && sudo docker compose -f docker-compose.prod.yml ps"
 
 echo "완료: http://${HOST}/app/login (참가자) · http://${HOST}/admin/login (운영자)"
