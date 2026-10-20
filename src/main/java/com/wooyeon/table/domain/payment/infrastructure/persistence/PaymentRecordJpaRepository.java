@@ -9,4 +9,6 @@ public interface PaymentRecordJpaRepository extends JpaRepository<PaymentRecord,
     List<PaymentRecord> findAllByApplicationIdOrderByIdAsc(Long applicationId);
 
     List<PaymentRecord> findTop500ByOrderByIdDesc();
+
+    long countByTransactionIdAndSuccessTrue(String transactionId);
 }
