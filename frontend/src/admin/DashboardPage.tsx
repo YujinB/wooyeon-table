@@ -5,6 +5,7 @@ import { Dashboard, SlotOverview, slotStartsAt, slotStatusView } from '../api/ad
 import { ErrorBox, Loading } from '../components/ui';
 import { dateTime, day, time } from '../format';
 import { useApi } from '../useApi';
+import { Pagination, usePaged } from './Pagination';
 
 /** 운영 대시보드: 처리할 예외 건수와 회차별 신청·결제·매칭 현황 */
 export default function DashboardPage() {
@@ -85,40 +86,46 @@ export default function DashboardPage() {
   );
 }
 
+const SLOT_PAGE_SIZE = 10;
+
 /** 회차 한 줄: 누르면 회차 화면으로 */
 function SlotTable({ slots }: { slots: SlotOverview[] }) {
   const navigate = useNavigate();
+  const paged = usePaged(slots, SLOT_PAGE_SIZE);
   return (
-    <div className="table-wrap">
-      <table className="data">
-        <thead>
-          <tr>
-            <th>회차</th><th>상태</th><th>매칭 마감</th>
-            <th className="num">신청</th><th className="num">결제 대기</th><th className="num">매칭 대기</th>
-            <th className="num">확정</th><th className="num">테이블</th><th className="num">실패·선택 대기</th>
-            <th className="num">취소·환불·보관</th>
-          </tr>
-        </thead>
-        <tbody>
-          {slots.map((s) => {
-            const view = slotStatusView(s.status, s.matchAt, s.eventDate, s.startTime);
-            return (
-              <tr key={s.slotId} className="link" onClick={() => navigate(`/admin/slots/${s.slotId}`)}>
-                <td style={{ whiteSpace: 'nowrap' }}><b>{day(s.eventDate)}</b> <span className="muted small">{time(s.startTime)}</span></td>
-                <td><span className={`pill ${view.tone}`}>{view.label}</span></td>
-                <td className="small" style={{ whiteSpace: 'nowrap' }}>{dateTime(s.matchAt)}</td>
-                <td className="num">{s.applicants}</td>
-                <td className="num">{s.paymentPending}</td>
-                <td className="num">{s.waiting}</td>
-                <td className="num">{s.confirmed}</td>
-                <td className="num">{s.tables}</td>
-                <td className="num">{s.matchFailed}</td>
-                <td className="num">{s.closed}</td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
+    <>
+      <div className="table-wrap">
+        <table className="data">
+          <thead>
+            <tr>
+              <th>회차</th><th>상태</th><th>매칭 마감</th>
+              <th className="num">신청</th><th className="num">결제 대기</th><th className="num">매칭 대기</th>
+              <th className="num">확정</th><th className="num">테이블</th><th className="num">실패·선택 대기</th>
+              <th className="num">취소·환불·보관</th>
+            </tr>
+          </thead>
+          <tbody>
+            {paged.rows.map((s) => {
+              const view = slotStatusView(s.status, s.matchAt, s.eventDate, s.startTime);
+              return (
+                <tr key={s.slotId} className="link" onClick={() => navigate(`/admin/slots/${s.slotId}`)}>
+                  <td style={{ whiteSpace: 'nowrap' }}><b>{day(s.eventDate)}</b> <span className="muted small">{time(s.startTime)}</span></td>
+                  <td><span className={`pill ${view.tone}`}>{view.label}</span></td>
+                  <td className="small" style={{ whiteSpace: 'nowrap' }}>{dateTime(s.matchAt)}</td>
+                  <td className="num">{s.applicants}</td>
+                  <td className="num">{s.paymentPending}</td>
+                  <td className="num">{s.waiting}</td>
+                  <td className="num">{s.confirmed}</td>
+                  <td className="num">{s.tables}</td>
+                  <td className="num">{s.matchFailed}</td>
+                  <td className="num">{s.closed}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+      <Pagination {...paged} pageSize={SLOT_PAGE_SIZE} />
+    </>
   );
 }
