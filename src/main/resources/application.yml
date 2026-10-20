@@ -2,13 +2,16 @@ spring:
   application:
     name: wooyeon-table
   datasource:
-    url: ${DB_URL:jdbc:mysql://localhost:3306/wooyeon?serverTimezone=Asia/Seoul&characterEncoding=UTF-8}
+    url: ${DB_URL:jdbc:mysql://localhost:3307/wooyeon?serverTimezone=Asia/Seoul&characterEncoding=UTF-8}
     username: ${DB_USERNAME:wooyeon}
     password: ${DB_PASSWORD:wooyeon}
   jpa:
     hibernate:
       ddl-auto: update
     open-in-view: false
+    properties:
+      hibernate:
+        default_batch_fetch_size: 100
   jackson:
     time-zone: Asia/Seoul
 
@@ -17,3 +20,37 @@ management:
     web:
       exposure:
         include: health
+
+matching:
+  scheduler:
+    enabled: ${MATCHING_SCHEDULER_ENABLED:false}
+
+auth:
+  # 로그인 토큰 서명 키. 배포 환경에서는 반드시 AUTH_TOKEN_SECRET 으로 바꾼다
+  token-secret: ${AUTH_TOKEN_SECRET:local-dev-secret-change-me-please-0123456789}
+  token-ttl-hours: ${AUTH_TOKEN_TTL_HOURS:168}
+  # 데모 계정(admin, demo1~5) 공통 비밀번호
+  demo-password: ${DEMO_PASSWORD:wooyeon1234}
+
+notification:
+  dispatcher:
+    # 예약 알림(전날 리마인드)·실패 알림 재시도 발송 주기
+    enabled: ${NOTIFICATION_DISPATCHER_ENABLED:true}
+    interval-ms: ${NOTIFICATION_DISPATCHER_INTERVAL_MS:30000}
+
+attendance:
+  # 체크인은 모임 시작 이 시간 전부터 연다
+  check-in-opens-hours-before: 2
+  # 데모용: 모임 당일이 아니어도 확정 직후부터 체크인 허용 (실제 운영은 false)
+  check-in-anytime: ${ATTENDANCE_CHECK_IN_ANYTIME:true}
+  auto-close:
+    # 행사 시작 후 이 시간이 지나면 자동 종료 처리 (미체크인 → 노쇼 후보, 후기 요청). 배포에서 켬
+    enabled: ${EVENT_AUTO_CLOSE_ENABLED:false}
+    hours-after-start: 4
+
+demo:
+  seed:
+    # 서버 시작 시 시연용 데이터(지난 모임 1회차 + 다가오는 4회차 대기 참가자)를 한 번 넣는다. 빈 DB에서만
+    enabled: ${DEMO_SEED_ENABLED:false}
+    # 신청자 엑셀(가상데이터) 경로. 있으면 291명을 적재하고 지난 회차를 날짜순으로 자동 매칭한다
+    applicants-file: ${DEMO_APPLICANTS_FILE:}

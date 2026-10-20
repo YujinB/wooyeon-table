@@ -1,0 +1,35 @@
+package com.wooyeon.table.global.exception;
+
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+
+@Getter
+@RequiredArgsConstructor
+public enum ErrorCode {
+    INVALID_INPUT(HttpStatus.BAD_REQUEST, "요청 값이 올바르지 않습니다"),
+    UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "로그인이 필요합니다"),
+    LOGIN_FAILED(HttpStatus.UNAUTHORIZED, "아이디 또는 비밀번호가 올바르지 않습니다"),
+    FORBIDDEN(HttpStatus.FORBIDDEN, "권한이 없습니다"),
+    PARTICIPATION_RESTRICTED(HttpStatus.FORBIDDEN, "참가가 제한된 계정입니다"),
+    USER_NOT_FOUND(HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다"),
+    EVENT_SLOT_NOT_FOUND(HttpStatus.NOT_FOUND, "회차를 찾을 수 없습니다"),
+    EVENT_SLOT_ALREADY_EXISTS(HttpStatus.CONFLICT, "그 날짜에 이미 회차가 있습니다"),
+    INVALID_STATUS_TRANSITION(HttpStatus.CONFLICT, "현재 상태에서는 처리할 수 없습니다"),
+    APPLICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "신청을 찾을 수 없습니다"),
+    CONSENT_REQUIRED(HttpStatus.BAD_REQUEST, "개인정보 수집·이용과 운영 정책에 동의해야 신청할 수 있어요"),
+    PROFILE_INCOMPLETE(HttpStatus.BAD_REQUEST, "신청 전에 프로필(관심사·성향·희망 성향·식사 예산)을 채워 주세요"),
+    APPLICATION_CLOSED(HttpStatus.CONFLICT, "신청이 마감된 회차입니다"),
+    PAYMENT_NOT_ALLOWED(HttpStatus.CONFLICT, "결제할 수 없는 신청입니다"),
+    CANCEL_NOT_ALLOWED(HttpStatus.CONFLICT, "취소할 수 없는 신청입니다"),
+    RESOLUTION_NOT_AVAILABLE(HttpStatus.CONFLICT, "매칭 실패 해결을 고를 수 있는 신청이 아닙니다"),
+    DUPLICATE_REQUEST(HttpStatus.CONFLICT, "이미 처리된 요청입니다"),
+    DUPLICATE_APPLICATION(HttpStatus.CONFLICT, "이미 신청한 날짜가 있습니다"),
+    CHAT_ROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "단체방을 찾을 수 없습니다"),
+    DINING_TABLE_NOT_FOUND(HttpStatus.NOT_FOUND, "테이블을 찾을 수 없습니다"),
+    IMPORT_FAILED(HttpStatus.BAD_REQUEST, "신청자 파일을 읽을 수 없습니다"),
+    INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 오류가 발생했습니다");
+
+    private final HttpStatus status;
+    private final String message;
+}
