@@ -401,6 +401,16 @@ table.data .num { text-align: right; font-variant-numeric: tabular-nums; }
 .exception .body { flex: 1; min-width: 0; }
 .exception .actions { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
 .filter { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+.pager { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+.pager-buttons { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.pager-btn {
+  min-width: 34px; height: 32px; padding: 0 10px;
+  border: 1px solid var(--line); border-radius: 8px; background: #fff; color: var(--text);
+  font-size: 13px; cursor: pointer;
+}
+.pager-btn.on { background: var(--brand); border-color: var(--brand); color: #fff; font-weight: 700; }
+.pager-btn:disabled { opacity: 0.4; cursor: default; }
+.pager-gap { padding: 0 4px; color: var(--muted); }
 @media (max-width: 760px) {
   .admin { flex-direction: column; }
   .admin-nav { width: auto; height: auto; position: static; flex-direction: row; flex-wrap: wrap; padding: 10px; }

@@ -4,6 +4,7 @@ import { NotificationRow, PaymentRow, ReportRow, VenueInfo } from '../api/adminT
 import { ErrorBox, Loading } from '../components/ui';
 import { dateTime, won } from '../format';
 import { useApi } from '../useApi';
+import { Pagination, usePaged } from './Pagination';
 
 const REGION_LABEL: Record<string, string> = {
   HONGDAE_HAPJEONG: '홍대/합정', GANGNAM_SINNONHYEON: '강남/신논현', EULJIRO_JONGNO: '을지로/종로', JAMSIL: '잠실',
@@ -56,9 +57,11 @@ export function VenuesPage() {
 export function PaymentsPage() {
   const payments = useApi<PaymentRow[]>('/api/admin/payments');
   const [failedOnly, setFailedOnly] = useState(false);
+  const all = payments.data ?? [];
+  const failed = all.filter((row) => !row.payment.success);
+  const rows = failedOnly ? failed : all;
+  const paged = usePaged(rows);
   if (!payments.data) return payments.error ? <ErrorBox message={payments.error} /> : <Loading />;
-  const failed = payments.data.filter((row) => !row.payment.success);
-  const rows = failedOnly ? failed : payments.data;
   return (
     <div>
       <Head title="결제·환불" note="모의 결제 기준. 환불은 운영자 승인 없이 자동 처리되고, 실패한 환불만 예외 처리함에 올라가요." />
@@ -73,7 +76,7 @@ export function PaymentsPage() {
               <tr><th>시각</th><th>이름</th><th>종류</th><th className="num">금액</th><th>결과</th><th>신청</th></tr>
             </thead>
             <tbody>
-              {rows.map(({ name, payment: p }) => (
+              {paged.rows.map(({ name, payment: p }) => (
                 <tr key={p.recordId}>
                   <td className="small nowrap">{dateTime(p.at)}</td>
                   <td className="nowrap"><b>{name}</b></td>
@@ -87,6 +90,7 @@ export function PaymentsPage() {
           </table>
         </div>
       )}
+      <Pagination {...paged} />
     </div>
   );
 }
@@ -104,9 +108,10 @@ type NotificationStatus = keyof typeof NOTIFICATION_STATUS;
 export function NotificationsLogPage() {
   const notifications = useApi<NotificationRow[]>('/api/admin/notifications');
   const [status, setStatus] = useState<NotificationStatus | 'ALL'>('ALL');
-  if (!notifications.data) return notifications.error ? <ErrorBox message={notifications.error} /> : <Loading />;
-  const all = notifications.data;
+  const all = notifications.data ?? [];
   const rows = status === 'ALL' ? all : all.filter((row) => row.notification.status === status);
+  const paged = usePaged(rows);
+  if (!notifications.data) return notifications.error ? <ErrorBox message={notifications.error} /> : <Loading />;
   return (
     <div>
       <Head title="자동 메시지 이력"
@@ -126,7 +131,7 @@ export function NotificationsLogPage() {
               <tr><th>예약 시각</th><th>받는 사람</th><th>알림</th><th>상태</th><th className="num">시도</th><th>발송 시각</th></tr>
             </thead>
             <tbody>
-              {rows.map(({ name, notification: n }) => (
+              {paged.rows.map(({ name, notification: n }) => (
                 <tr key={n.notificationId}>
                   <td className="small nowrap">{dateTime(n.scheduledAt)}</td>
                   <td className="nowrap"><b>{name}</b></td>
@@ -143,6 +148,7 @@ export function NotificationsLogPage() {
           </table>
         </div>
       )}
+      <Pagination {...paged} />
     </div>
   );
 }
