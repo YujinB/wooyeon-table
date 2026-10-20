@@ -15,7 +15,6 @@ public enum ErrorCode {
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다"),
     EVENT_SLOT_NOT_FOUND(HttpStatus.NOT_FOUND, "회차를 찾을 수 없습니다"),
     EVENT_SLOT_ALREADY_EXISTS(HttpStatus.CONFLICT, "그 날짜에 이미 회차가 있습니다"),
-    EVENT_SLOT_NOT_THURSDAY(HttpStatus.BAD_REQUEST, "회차는 목요일로만 만들 수 있어요"),
     EVENT_SLOT_NOT_DELETABLE(HttpStatus.CONFLICT, "신청자가 있거나 모집이 끝난 회차는 지울 수 없어요"),
     INVALID_STATUS_TRANSITION(HttpStatus.CONFLICT, "현재 상태에서는 처리할 수 없습니다"),
     APPLICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "신청을 찾을 수 없습니다"),

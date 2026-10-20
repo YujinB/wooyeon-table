@@ -84,18 +84,18 @@ class AccountApplyFlowTest {
     }
 
     @Test
-    void 회차는_목요일만_만들고_신청자가_없을_때만_지울_수_있다() throws Exception {
+    void 회차는_요일과_상관없이_만들고_신청자가_없을_때만_지울_수_있다() throws Exception {
         String admin = login("admin");
         LocalDate thursday = LocalDate.now().plusDays(500).with(TemporalAdjusters.next(DayOfWeek.THURSDAY));
 
-        mockMvc.perform(authed(post("/api/admin/slots"), admin).contentType(MediaType.APPLICATION_JSON)
-                        .content(json(Map.of("eventDate", thursday.plusDays(2).toString()))))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error.code").value("EVENT_SLOT_NOT_THURSDAY"));
-
+        // 토요일 회차도 만들 수 있고, 마감은 요일과 상관없이 전날 0시
+        LocalDate saturday = thursday.plusDays(2);
         long empty = body(mockMvc.perform(authed(post("/api/admin/slots"), admin)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(json(Map.of("eventDate", thursday.toString()))))).path("data").path("id").asLong();
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json(Map.of("eventDate", saturday.toString()))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.matchAt").value(saturday.minusDays(1).atStartOfDay() + ":00")))
+                .path("data").path("id").asLong();
         long applied = body(mockMvc.perform(authed(post("/api/admin/slots"), admin)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(json(Map.of("eventDate", thursday.plusWeeks(1).toString()))))).path("data").path("id").asLong();
