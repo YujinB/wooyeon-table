@@ -31,10 +31,10 @@ public class AdminSlotController {
         return ApiResponse.ok(eventSlotQueryService.findAllSlots());
     }
 
-    /** 회차 만들기 (목요일만). 만들면 지난 참가자에게 모집 알림이 간다 */
+    /** 회차 만들기. 만들면 지난 참가자에게 모집 알림이 간다 */
     @PostMapping
     public ApiResponse<EventSlotInfo> create(@Valid @RequestBody CreateSlotRequest request) {
-        Long slotId = eventSlotCommandService.open(request.eventDate(), request.startTime(), request.matchAt());
+        Long slotId = eventSlotCommandService.create(request.eventDate(), request.startTime(), request.matchAt());
         return ApiResponse.ok(eventSlotQueryService.getSlot(slotId));
     }
 

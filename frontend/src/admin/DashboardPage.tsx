@@ -21,9 +21,9 @@ export default function DashboardPage() {
   const upcoming = slots.filter((s) => slotStartsAt(s.eventDate, s.startTime) > now).reverse();
   const past = slots.filter((s) => slotStartsAt(s.eventDate, s.startTime) <= now);
 
-  // 회차 생성: 목요일 19:30, 매칭(신청) 마감은 전날 0시(화요일 24:00)가 기본값. 만들면 지난 참가자에게 모집 알림이 간다
-  const picked = eventDate ? new Date(`${eventDate}T00:00:00`) : null;
-  const notThursday = picked !== null && picked.getDay() !== 4;
+  // 회차 생성: 19:30 시작, 신청·매칭 마감은 전날 0시(목요일 모임이면 화요일 24:00)가 기본값.
+  // 만들면 지난 참가자에게 모집 알림이 가서, 요일·마감을 미리 보여 주고 두 번 눌러야 만든다
+  const deadline = eventDate ? new Date(new Date(`${eventDate}T00:00:00`).getTime() - 86_400_000) : null;
   const createSlot = async () => {
     try {
       await api.post('/api/admin/slots', { eventDate });
@@ -51,16 +51,15 @@ export default function DashboardPage() {
         <div>
           <div className="row">
             <input className="input" type="date" value={eventDate} onChange={(e) => setEventDate(e.target.value)}
-              style={{ width: 170 }} aria-label="행사 날짜 (목요일)" />
+              style={{ width: 170 }} aria-label="행사 날짜" />
             <ConfirmButton label="회차 만들기" confirmLabel="모집 알림이 가요 — 한 번 더 누르면 생성"
-              disabled={!eventDate || notThursday} onConfirm={createSlot} />
+              disabled={!eventDate} onConfirm={createSlot} />
           </div>
-          <p className={`small ${notThursday ? '' : 'muted'}`}
-            style={{ margin: '6px 0 0', color: notThursday ? 'var(--danger)' : undefined }}>
-            {notThursday ? '모임은 목요일이에요. 목요일을 골라 주세요'
-              : picked ? `${day(eventDate)} 19:30 시작 · 신청·매칭 마감 전날 0시`
-                : '목요일 19:30 모임, 신청·매칭 마감은 전날 0시'}
-          </p>
+          {deadline && (
+            <p className="small muted" style={{ margin: '6px 0 0' }}>
+              {day(eventDate)} 19:30 시작 · 마감 {deadline.getMonth() + 1}/{deadline.getDate()} 0시
+            </p>
+          )}
         </div>
       </div>
       <ErrorBox message={createError} />

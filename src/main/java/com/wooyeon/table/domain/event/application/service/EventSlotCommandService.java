@@ -6,7 +6,6 @@ import com.wooyeon.table.domain.event.domain.repository.EventSlotRepository;
 import com.wooyeon.table.global.exception.BusinessException;
 import com.wooyeon.table.global.exception.ErrorCode;
 import java.time.Clock;
-import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -25,14 +24,6 @@ public class EventSlotCommandService {
     private final EventSlotRepository eventSlotRepository;
     private final Clock clock;
     private final ApplicationEventPublisher eventPublisher;
-
-    /** 운영자 화면에서 회차 만들기: 모임은 목요일 저녁이라 목요일만 받는다 */
-    public Long open(LocalDate eventDate, LocalTime startTime, LocalDateTime matchAt) {
-        if (eventDate.getDayOfWeek() != DayOfWeek.THURSDAY) {
-            throw new BusinessException(ErrorCode.EVENT_SLOT_NOT_THURSDAY, eventDate.toString());
-        }
-        return create(eventDate, startTime, matchAt);
-    }
 
     /**
      * 회차 생성. 시작 시각·신청 마감을 비우면 기본값(19:30 시작, 전날 0시 마감)
