@@ -9,6 +9,7 @@ import com.wooyeon.table.domain.operation.application.dto.SlotApplicant;
 import com.wooyeon.table.domain.operation.application.service.CsvExportService;
 import com.wooyeon.table.domain.operation.application.service.CsvExportService.CsvFile;
 import com.wooyeon.table.domain.operation.application.service.OperationQueryService;
+import com.wooyeon.table.global.audit.StatusChange;
 import com.wooyeon.table.global.response.ApiResponse;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -59,6 +60,12 @@ public class AdminOperationController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.attachment()
                         .filename(file.filename()).build().toString())
                 .body(file.content());
+    }
+
+    /** 신청의 상태 변경 이력: 언제·누가·이전 값 → 새 값 (PRD 16절) */
+    @GetMapping("/applications/{applicationId}/history")
+    public ApiResponse<List<StatusChange>> statusHistory(@PathVariable Long applicationId) {
+        return ApiResponse.ok(operationQueryService.statusHistory(applicationId));
     }
 
     /** 결제·환불 내역 (PRD 11절 결제·환불) */

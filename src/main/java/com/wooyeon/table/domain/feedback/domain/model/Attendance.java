@@ -15,10 +15,13 @@ import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import java.util.Set;
 import lombok.AccessLevel;
+import org.hibernate.envers.Audited;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 /** 확정 참가자의 참석 기록 (PRD 13절 Attendance). 신청당 하나 */
+/** 참석 상태 변경은 Envers가 이력으로 남긴다 */
+@Audited
 @Getter
 @Entity
 @Table(name = "attendances", indexes = {

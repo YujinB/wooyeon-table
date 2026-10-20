@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { api, errorText } from '../api/client';
 import {
-  AdminAttendance, slotStatusView, SlotApplicant, SlotFeedbackSummary, SlotMatchingResult,
+  AdminAttendance, slotStatusView, SlotApplicant, StatusChange, SlotFeedbackSummary, SlotMatchingResult,
 } from '../api/adminTypes';
 import { ErrorBox, Loading } from '../components/ui';
 import { dateTime, day, statusTone } from '../format';
@@ -164,6 +164,7 @@ function MatchingTab({ result: r }: { result: SlotMatchingResult }) {
 
 function ApplicantsTab({ slotId }: { slotId: string }) {
   const applicants = useApi<SlotApplicant[]>(`/api/admin/slots/${slotId}/applicants`);
+  const [selected, setSelected] = useState<SlotApplicant | null>(null);
   if (!applicants.data) return applicants.error ? <ErrorBox message={applicants.error} /> : <Loading />;
   if (applicants.data.length === 0) return <div className="alert info">이 날짜를 고른 신청이 없어요</div>;
   return (
@@ -182,7 +183,7 @@ function ApplicantsTab({ slotId }: { slotId: string }) {
           </thead>
           <tbody>
             {applicants.data.map((a) => (
-              <tr key={a.applicationId}>
+              <tr key={a.applicationId} className="link" onClick={() => setSelected(a)} title="상태 변경 이력 보기">
                 <td className="nowrap"><b>{a.name}</b></td>
                 <td className="nowrap">{a.age ?? '-'} · {a.gender ?? '-'}</td>
                 <td className="nowrap">{a.mbti ?? '-'}</td>
@@ -202,7 +203,41 @@ function ApplicantsTab({ slotId }: { slotId: string }) {
           </tbody>
         </table>
       </div>
+      <p className="small muted" style={{ marginTop: 8 }}>줄을 누르면 신청·결제·매칭·참석 상태가 언제, 누구에 의해 바뀌었는지 볼 수 있어요.</p>
+      {selected && <HistorySheet applicant={selected} onClose={() => setSelected(null)} />}
     </>
+  );
+}
+
+/** 상태 변경 이력: 언제·누가·이전 값 → 새 값 (PRD 16절) */
+function HistorySheet({ applicant, onClose }: { applicant: SlotApplicant; onClose: () => void }) {
+  const history = useApi<StatusChange[]>(`/api/admin/applications/${applicant.applicationId}/history`);
+  return (
+    <div className="sheet-backdrop" onClick={onClose}>
+      <div className="sheet" style={{ maxWidth: 560 }} onClick={(e) => e.stopPropagation()}>
+        <div className="spread">
+          <p className="h2" style={{ margin: 0 }}>{applicant.name} · 신청 #{applicant.applicationId} 상태 이력</p>
+          <button className="btn btn-ghost btn-sm" onClick={onClose}>닫기</button>
+        </div>
+        {!history.data ? (history.error ? <ErrorBox message={history.error} /> : <Loading />) : history.data.length === 0 ? (
+          <p className="muted small">기록된 변경이 없어요 (이력 기능 도입 전에 만들어진 신청)</p>
+        ) : (
+          <table className="data" style={{ marginTop: 12 }}>
+            <thead><tr><th>시각</th><th>항목</th><th>변경</th><th>주체</th></tr></thead>
+            <tbody>
+              {history.data.map((change, i) => (
+                <tr key={i}>
+                  <td className="small nowrap">{dateTime(change.at)}</td>
+                  <td className="nowrap">{change.field}</td>
+                  <td className="small">{change.from ? `${change.from} → ` : ''}<b>{change.to}</b></td>
+                  <td className="small nowrap">{change.actor}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </div>
   );
 }
 

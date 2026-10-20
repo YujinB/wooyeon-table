@@ -1,12 +1,17 @@
 package com.wooyeon.table.domain.feedback.application.service;
 
 import com.wooyeon.table.domain.feedback.application.dto.AttendanceView;
+import com.wooyeon.table.domain.feedback.domain.model.Attendance;
 import com.wooyeon.table.domain.feedback.domain.model.AttendanceStatus;
+import com.wooyeon.table.global.audit.AuditHistoryReader;
+import com.wooyeon.table.global.audit.StatusChange;
 import com.wooyeon.table.domain.feedback.domain.repository.AttendanceRepository;
 import java.util.Collection;
 import java.util.EnumMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -19,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class AttendanceQueryService {
 
     private final AttendanceRepository attendanceRepository;
+    private final AuditHistoryReader auditHistoryReader;
 
     public List<AttendanceView> findByUser(Long userId) {
         return attendanceRepository.findAllByUserIdIn(List.of(userId)).stream().map(AttendanceView::from).toList();
@@ -41,6 +47,13 @@ public class AttendanceQueryService {
             counts.put(status, (long) attendanceRepository.findAllByStatus(status).size());
         }
         return counts;
+    }
+
+    /** 이 신청의 참석 상태 변경 이력 (PRD 16절) */
+    public List<StatusChange> statusHistory(Long applicationId) {
+        Map<String, Function<Attendance, String>> fields = new LinkedHashMap<>();
+        fields.put("참석", attendance -> attendance.getStatus().getLabel());
+        return auditHistoryReader.changes(Attendance.class, "applicationId", applicationId, fields);
     }
 
     /** 운영자가 확인할 노쇼 후보 */

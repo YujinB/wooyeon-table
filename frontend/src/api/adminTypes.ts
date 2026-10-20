@@ -296,3 +296,5 @@ export interface ReportRow {
     resolvedAt: string | null;
   };
 }
+
+export interface StatusChange { at: string; actor: string; field: string; from: string | null; to: string }

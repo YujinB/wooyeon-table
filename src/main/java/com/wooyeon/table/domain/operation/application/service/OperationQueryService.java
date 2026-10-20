@@ -30,6 +30,7 @@ import com.wooyeon.table.domain.profile.domain.model.Region;
 import com.wooyeon.table.domain.safety.application.dto.ReportView;
 import com.wooyeon.table.domain.safety.application.service.SanctionService;
 import com.wooyeon.table.domain.user.application.service.UserQueryService;
+import com.wooyeon.table.global.audit.StatusChange;
 import com.wooyeon.table.domain.venue.application.dto.VenueAssignmentView;
 import com.wooyeon.table.domain.venue.application.service.VenueQueryService;
 import java.time.Clock;
@@ -148,6 +149,14 @@ public class OperationQueryService {
                             countAttendance(history, AttendanceStatus.CANCELED_LATE),
                             reported.getOrDefault(application.userId(), 0L).intValue());
                 })
+                .toList();
+    }
+
+    /** 신청 하나의 신청·결제·매칭·참석 상태 변경 이력 (시간순, PRD 16절) */
+    public List<StatusChange> statusHistory(Long applicationId) {
+        return Stream.concat(applicationQueryService.statusHistory(applicationId).stream(),
+                        attendanceQueryService.statusHistory(applicationId).stream())
+                .sorted(Comparator.comparing(StatusChange::at))
                 .toList();
     }
 
