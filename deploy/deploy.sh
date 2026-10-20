@@ -19,7 +19,7 @@ echo "[1/4] 백엔드·프론트 빌드"
 
 echo "[2/4] 서버 준비 (처음이면 Docker·스왑 설치)"
 "${SCP[@]}" "$DIR/deploy/setup-ec2.sh" "$REMOTE:~/setup-ec2.sh"
-"${SSH[@]}" "bash ~/setup-ec2.sh"
+"${SSH[@]}" "sed -i 's/$//' ~/setup-ec2.sh && bash ~/setup-ec2.sh"
 
 echo "[3/4] 파일 올리기"
 "${SSH[@]}" "mkdir -p ~/wooyeon/data && rm -rf ~/wooyeon/dist"
