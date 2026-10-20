@@ -12,7 +12,8 @@ export default function DashboardPage() {
   const [eventDate, setEventDate] = useState('');
   const [createError, setCreateError] = useState<string | null>(null);
   if (!dashboard.data) return dashboard.error ? <ErrorBox message={dashboard.error} /> : <Loading />;
-  const { slots, exceptions } = dashboard.data;
+  const { totals, slots, exceptions } = dashboard.data;
+  const rate = (value: number | null) => (value === null ? '-' : `${value}%`);
   // 행사 시작 전이면 다가오는 회차(가까운 날짜부터), 지났으면 지난 회차(최근부터)
   const now = Date.now();
   const upcoming = slots.filter((s) => slotStartsAt(s.eventDate, s.startTime) > now).reverse();
@@ -52,7 +53,18 @@ export default function DashboardPage() {
       </div>
       <ErrorBox message={createError} />
 
-      <p className="section-title" style={{ marginTop: 0 }}>처리할 예외</p>
+      <p className="section-title" style={{ marginTop: 0 }}>전체 현황</p>
+      <div className="kpis">
+        <div className="kpi"><b>{totals.applications}</b><span>신청 · 결제 완료 {totals.paid}</span></div>
+        <div className="kpi"><b>{rate(totals.matchSuccessRate)}</b><span>매칭 성공률 · 확정 {totals.confirmed}명</span></div>
+        <div className="kpi"><b>{rate(totals.autoConfirmRate)}</b><span>자동 확정률 · 테이블 {totals.tables}개</span></div>
+        <div className={`kpi ${totals.awaitingChoice > 0 ? 'alert' : 'zero'}`}>
+          <b>{totals.awaitingChoice}</b><span>대체 일정·환불 선택 대기</span>
+        </div>
+        <div className="kpi"><b>{rate(totals.attendanceRate)}</b><span>참석률 · 참석 {totals.attended} / 노쇼 {totals.noShow}</span></div>
+      </div>
+
+      <p className="section-title">처리할 예외</p>
       <Link to="/admin/exceptions" className="kpis" style={{ display: 'grid' }}>
         {kpi('전체 미해결', exceptions.total)}
         {kpi(`신고 (긴급 ${exceptions.urgentReports})`, exceptions.reports)}

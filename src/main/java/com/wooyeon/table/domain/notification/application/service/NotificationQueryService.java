@@ -41,6 +41,12 @@ public class NotificationQueryService {
                 .toList();
     }
 
+    /** 자동 메시지 발송 이력 (최근 500건) */
+    @Transactional(readOnly = true)
+    public List<NotificationFailure> findRecent() {
+        return notificationRepository.findRecent().stream().map(NotificationFailure::from).toList();
+    }
+
     public void markRead(Long userId, Long notificationId) {
         Notification notification = notificationRepository.findById(notificationId)
                 .filter(found -> found.getUserId().equals(userId))

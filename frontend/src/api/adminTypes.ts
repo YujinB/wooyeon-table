@@ -53,7 +53,20 @@ export interface ExceptionCounts {
   total: number;
 }
 
-export interface Dashboard { slots: SlotOverview[]; exceptions: ExceptionCounts }
+export interface DashboardTotals {
+  applications: number;
+  paid: number;
+  confirmed: number;
+  matchSuccessRate: number | null;
+  tables: number;
+  autoConfirmRate: number | null;
+  awaitingChoice: number;
+  attended: number;
+  noShow: number;
+  attendanceRate: number | null;
+}
+
+export interface Dashboard { totals: DashboardTotals; slots: SlotOverview[]; exceptions: ExceptionCounts }
 
 export type ExceptionType = 'REPORT' | 'VENUE' | 'REFUND' | 'NOTIFICATION' | 'NO_SHOW';
 
@@ -183,6 +196,13 @@ export interface SlotApplicant {
   applicationId: number;
   userId: number;
   name: string;
+  age: number | null;
+  gender: string | null;
+  mbti: string | null;
+  attended: number;
+  noShow: number;
+  canceledLate: number;
+  reported: number;
   ticketLabel: string;
   regions: string[];
   status: string;
@@ -217,3 +237,64 @@ export interface SlotFeedbackSummary {
   tables: { tableId: number; responses: number; averages: FeedbackAverages }[];
   comments: { tableId: number; name: string; tableMood: number; comment: string }[];
 }
+
+export interface VenueInfo {
+  venueId: number;
+  name: string;
+  region: string;
+  address: string;
+  mapUrl: string;
+  mealBudget: string;
+  priceGuide: string;
+  tablesPerSlot: number;
+  autoBookable: boolean;
+  active: boolean;
+}
+
+export interface PaymentRow {
+  name: string | null;
+  payment: {
+    recordId: number;
+    applicationId: number;
+    type: string;
+    typeLabel: string;
+    success: boolean;
+    amount: number;
+    failureReason: string | null;
+    at: string;
+  };
+}
+
+export interface NotificationRow {
+  name: string | null;
+  notification: {
+    notificationId: number;
+    applicationId: number | null;
+    type: string;
+    title: string;
+    status: 'SCHEDULED' | 'SENT' | 'RETRYING' | 'GAVE_UP';
+    attempts: number;
+    lastError: string | null;
+    scheduledAt: string;
+    sentAt: string | null;
+  };
+}
+
+export interface ReportRow {
+  reporterName: string | null;
+  reportedName: string | null;
+  report: {
+    reportId: number;
+    tableId: number;
+    reasonLabel: string;
+    detail: string | null;
+    urgent: boolean;
+    status: 'RECEIVED' | 'ACTIONED' | 'DISMISSED';
+    action: 'WARNING' | 'RESTRICTED' | 'BANNED' | null;
+    operatorMemo: string | null;
+    reportedAt: string;
+    resolvedAt: string | null;
+  };
+}
+
+export interface StatusChange { at: string; actor: string; field: string; from: string | null; to: string }

@@ -7,4 +7,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface PaymentRecordJpaRepository extends JpaRepository<PaymentRecord, Long> {
 
     List<PaymentRecord> findAllByApplicationIdOrderByIdAsc(Long applicationId);
+
+    List<PaymentRecord> findTop500ByOrderByIdDesc();
 }

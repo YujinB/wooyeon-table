@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { api, errorText } from '../api/client';
 import {
-  AdminAttendance, slotStatusView, SlotApplicant, SlotFeedbackSummary, SlotMatchingResult,
+  AdminAttendance, slotStatusView, SlotApplicant, StatusChange, SlotFeedbackSummary, SlotMatchingResult,
 } from '../api/adminTypes';
 import { ErrorBox, Loading } from '../components/ui';
 import { dateTime, day, statusTone } from '../format';
@@ -164,28 +164,93 @@ function MatchingTab({ result: r }: { result: SlotMatchingResult }) {
 
 function ApplicantsTab({ slotId }: { slotId: string }) {
   const applicants = useApi<SlotApplicant[]>(`/api/admin/slots/${slotId}/applicants`);
+  const [selected, setSelected] = useState<SlotApplicant | null>(null);
   if (!applicants.data) return applicants.error ? <ErrorBox message={applicants.error} /> : <Loading />;
   if (applicants.data.length === 0) return <div className="alert info">이 날짜를 고른 신청이 없어요</div>;
   return (
-    <div className="table-wrap">
-      <table className="data">
-        <thead>
-          <tr><th>이름</th><th>이용권</th><th>지역</th><th>상태</th><th>결제</th><th>신청 시각</th></tr>
-        </thead>
-        <tbody>
-          {applicants.data.map((a) => (
-            <tr key={a.applicationId}>
-              <td className="nowrap"><b>{a.name}</b></td>
-              <td>{a.ticketLabel}</td>
-              <td className="small">{a.regions.join(', ')}</td>
-              <td><span className={`pill ${statusTone(a.status)}`}>{a.statusLabel}</span></td>
-              <td className="small">{a.paymentStatusLabel}</td>
-              <td className="small">{dateTime(a.submittedAt)}</td>
+    <>
+      <div className="row" style={{ marginBottom: 12, flexWrap: 'wrap' }}>
+        <CsvButton path={`/api/admin/slots/${slotId}/applicants.csv`} filename={`applicants-${slotId}.csv`} label="신청자 CSV" />
+        <CsvButton path={`/api/admin/slots/${slotId}/tables.csv`} filename={`tables-${slotId}.csv`} label="테이블 결과 CSV" />
+      </div>
+      <div className="table-wrap">
+        <table className="data">
+          <thead>
+            <tr>
+              <th>이름</th><th>나이·성별</th><th>MBTI</th><th>이용권</th><th>지역</th><th>상태</th><th>결제</th>
+              <th>이전 이력</th><th>신청 시각</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {applicants.data.map((a) => (
+              <tr key={a.applicationId} className="link" onClick={() => setSelected(a)} title="상태 변경 이력 보기">
+                <td className="nowrap"><b>{a.name}</b></td>
+                <td className="nowrap">{a.age ?? '-'} · {a.gender ?? '-'}</td>
+                <td className="nowrap">{a.mbti ?? '-'}</td>
+                <td className="nowrap">{a.ticketLabel}</td>
+                <td className="small">{a.regions.join(', ')}</td>
+                <td><span className={`pill ${statusTone(a.status)}`}>{a.statusLabel}</span></td>
+                <td className="small nowrap">{a.paymentStatusLabel}</td>
+                <td className="small nowrap">
+                  참석 {a.attended}
+                  {a.noShow > 0 && <span style={{ color: 'var(--danger)' }}> · 노쇼 {a.noShow}</span>}
+                  {a.canceledLate > 0 && <span style={{ color: 'var(--warn)' }}> · 늦은 취소 {a.canceledLate}</span>}
+                  {a.reported > 0 && <span style={{ color: 'var(--danger)' }}> · 신고 {a.reported}</span>}
+                </td>
+                <td className="small nowrap">{dateTime(a.submittedAt)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p className="small muted" style={{ marginTop: 8 }}>줄을 누르면 신청·결제·매칭·참석 상태가 언제, 누구에 의해 바뀌었는지 볼 수 있어요.</p>
+      {selected && <HistorySheet applicant={selected} onClose={() => setSelected(null)} />}
+    </>
+  );
+}
+
+/** 상태 변경 이력: 언제·누가·이전 값 → 새 값 (PRD 16절) */
+function HistorySheet({ applicant, onClose }: { applicant: SlotApplicant; onClose: () => void }) {
+  const history = useApi<StatusChange[]>(`/api/admin/applications/${applicant.applicationId}/history`);
+  return (
+    <div className="sheet-backdrop" onClick={onClose}>
+      <div className="sheet" style={{ maxWidth: 560 }} onClick={(e) => e.stopPropagation()}>
+        <div className="spread">
+          <p className="h2" style={{ margin: 0 }}>{applicant.name} · 신청 #{applicant.applicationId} 상태 이력</p>
+          <button className="btn btn-ghost btn-sm" onClick={onClose}>닫기</button>
+        </div>
+        {!history.data ? (history.error ? <ErrorBox message={history.error} /> : <Loading />) : history.data.length === 0 ? (
+          <p className="muted small">기록된 변경이 없어요 (이력 기능 도입 전에 만들어진 신청)</p>
+        ) : (
+          <table className="data" style={{ marginTop: 12 }}>
+            <thead><tr><th>시각</th><th>항목</th><th>변경</th><th>주체</th></tr></thead>
+            <tbody>
+              {history.data.map((change, i) => (
+                <tr key={i}>
+                  <td className="small nowrap">{dateTime(change.at)}</td>
+                  <td className="nowrap">{change.field}</td>
+                  <td className="small">{change.from ? `${change.from} → ` : ''}<b>{change.to}</b></td>
+                  <td className="small nowrap">{change.actor}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
     </div>
+  );
+}
+
+function CsvButton({ path, filename, label }: { path: string; filename: string; label: string }) {
+  const [error, setError] = useState<string | null>(null);
+  return (
+    <>
+      <button className="btn btn-ghost btn-sm"
+        onClick={() => api.download(path, filename).then(() => setError(null)).catch((e) => setError(errorText(e)))}>
+        {label}
+      </button>
+      {error && <span className="small" style={{ color: 'var(--danger)' }}>{error}</span>}
+    </>
   );
 }
 

@@ -22,5 +22,8 @@ public interface NotificationRepository {
 
     List<Notification> findAllByStatus(NotificationStatus status);
 
+    /** 최근 발송·예약 내역 (최신부터, 운영자 조회) */
+    List<Notification> findRecent();
+
     List<Notification> findAllByApplicationId(Long applicationId);
 }

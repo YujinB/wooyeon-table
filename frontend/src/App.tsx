@@ -19,6 +19,7 @@ import DashboardPage from './admin/DashboardPage';
 import ExceptionsPage from './admin/ExceptionsPage';
 import SlotPage from './admin/SlotPage';
 import TablePage from './admin/TablePage';
+import { NotificationsLogPage, PaymentsPage, ReportsPage, VenuesPage } from './admin/LookupPages';
 
 function RequireParticipant({ children }: { children: JSX.Element }) {
   return session.token() ? children : <Navigate to="/app/login" replace />;
@@ -56,6 +57,10 @@ export default function App() {
         <Route path="exceptions" element={<ExceptionsPage />} />
         <Route path="slots/:slotId" element={<SlotPage />} />
         <Route path="tables/:tableId" element={<TablePage />} />
+        <Route path="venues" element={<VenuesPage />} />
+        <Route path="payments" element={<PaymentsPage />} />
+        <Route path="notifications" element={<NotificationsLogPage />} />
+        <Route path="reports" element={<ReportsPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/app" replace />} />
     </Routes>

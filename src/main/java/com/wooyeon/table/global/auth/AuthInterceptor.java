@@ -1,5 +1,6 @@
 package com.wooyeon.table.global.auth;
 
+import com.wooyeon.table.global.audit.ActorContext;
 import com.wooyeon.table.global.exception.BusinessException;
 import com.wooyeon.table.global.exception.ErrorCode;
 import jakarta.servlet.http.HttpServletRequest;
@@ -35,6 +36,13 @@ public class AuthInterceptor implements HandlerInterceptor {
             throw new BusinessException(ErrorCode.FORBIDDEN);
         }
         request.setAttribute(AUTH_USER_ATTRIBUTE, user);
+        ActorContext.set((user.isAdmin() ? "운영자 #" : "참가자 #") + user.userId());
         return true;
+    }
+
+    @Override
+    public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler,
+                                Exception exception) {
+        ActorContext.clear();
     }
 }

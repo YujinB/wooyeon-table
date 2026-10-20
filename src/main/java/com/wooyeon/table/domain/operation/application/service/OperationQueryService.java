@@ -13,20 +13,32 @@ import com.wooyeon.table.domain.feedback.application.service.AttendanceQueryServ
 import com.wooyeon.table.domain.matching.application.service.MatchingQueryService;
 import com.wooyeon.table.domain.notification.application.dto.NotificationFailure;
 import com.wooyeon.table.domain.notification.application.service.NotificationQueryService;
+import com.wooyeon.table.domain.operation.application.dto.AdminRows.NotificationRow;
+import com.wooyeon.table.domain.operation.application.dto.AdminRows.PaymentRow;
+import com.wooyeon.table.domain.operation.application.dto.AdminRows.ReportRow;
 import com.wooyeon.table.domain.operation.application.dto.Dashboard;
+import com.wooyeon.table.domain.payment.application.dto.PaymentRecordView;
+import com.wooyeon.table.domain.payment.application.service.PaymentQueryService;
 import com.wooyeon.table.domain.operation.application.dto.Dashboard.ExceptionCounts;
 import com.wooyeon.table.domain.operation.application.dto.Dashboard.SlotOverview;
 import com.wooyeon.table.domain.operation.application.dto.ExceptionItem;
 import com.wooyeon.table.domain.operation.application.dto.ExceptionItem.ExceptionType;
 import com.wooyeon.table.domain.operation.application.dto.SlotApplicant;
+import com.wooyeon.table.domain.profile.application.dto.MatchingProfile;
+import com.wooyeon.table.domain.profile.application.service.ProfileQueryService;
 import com.wooyeon.table.domain.profile.domain.model.Region;
 import com.wooyeon.table.domain.safety.application.dto.ReportView;
 import com.wooyeon.table.domain.safety.application.service.SanctionService;
 import com.wooyeon.table.domain.user.application.service.UserQueryService;
+import com.wooyeon.table.global.audit.StatusChange;
 import com.wooyeon.table.domain.venue.application.dto.VenueAssignmentView;
 import com.wooyeon.table.domain.venue.application.service.VenueQueryService;
+import java.time.Clock;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import com.wooyeon.table.domain.feedback.domain.model.AttendanceStatus;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -56,6 +68,9 @@ public class OperationQueryService {
     private final AttendanceQueryService attendanceQueryService;
     private final SanctionService sanctionService;
     private final UserQueryService userQueryService;
+    private final PaymentQueryService paymentQueryService;
+    private final ProfileQueryService profileQueryService;
+    private final Clock clock;
 
     public Dashboard dashboard() {
         List<ApplicationInfo> applications = applicationQueryService.findAllSubmitted();
@@ -69,7 +84,36 @@ public class OperationQueryService {
                 notificationQueryService.findGaveUp().size(), attendanceQueryService.findNoShowCandidates().size(),
                 reports.size(), (int) reports.stream().filter(ReportView::urgent).count(),
                 applicationQueryService.findByPaymentStatus(PaymentStatus.REFUND_FAILED).size());
-        return new Dashboard(slots, counts);
+        return new Dashboard(totals(applications, tables), slots, counts);
+    }
+
+    private Dashboard.Totals totals(List<ApplicationInfo> applications, Map<Long, Long> tablesBySlot) {
+        Set<PaymentStatus> everPaid = EnumSet.of(PaymentStatus.PAID, PaymentStatus.REFUND_AVAILABLE,
+                PaymentStatus.REFUND_REQUESTED, PaymentStatus.REFUND_PROCESSING, PaymentStatus.REFUNDED,
+                PaymentStatus.REFUND_FAILED);
+        long paid = applications.stream().filter(application -> everPaid.contains(application.paymentStatus())).count();
+        long confirmed = count(applications, MatchStatus.CONFIRMED);
+        long awaitingChoice = count(applications, MatchStatus.ALTERNATIVE_OFFERED);
+        long failed = awaitingChoice + count(applications, MatchStatus.NO_MATCH);
+        long tables = tablesBySlot.values().stream().mapToLong(Long::longValue).sum();
+        Map<AttendanceStatus, Long> attendance = attendanceQueryService.countByStatus();
+        long attended = attendance.get(AttendanceStatus.ATTENDED);
+        long noShow = attendance.get(AttendanceStatus.NO_SHOW) + attendance.get(AttendanceStatus.NO_SHOW_CANDIDATE);
+        return new Dashboard.Totals(applications.size(), paid, confirmed, percent(confirmed, confirmed + failed),
+                tables, tables > 0 ? 100 : null, awaitingChoice, attended, noShow,
+                percent(attended, attended + noShow));
+    }
+
+    private static int countAttendance(List<AttendanceView> history, AttendanceStatus status) {
+        return (int) history.stream().filter(attendance -> attendance.status() == status).count();
+    }
+
+    private static long count(List<ApplicationInfo> applications, MatchStatus status) {
+        return applications.stream().filter(application -> application.matchStatus() == status).count();
+    }
+
+    private static Integer percent(long part, long whole) {
+        return whole == 0 ? null : (int) Math.round(part * 100.0 / whole);
     }
 
     /** 이 날짜를 고른 신청자 (다른 날짜로 확정된 신청 제외), 최근 신청부터 */
@@ -78,18 +122,71 @@ public class OperationQueryService {
         List<ApplicationInfo> applications = applicationQueryService.findAllSubmitted().stream()
                 .filter(application -> belongsTo(application, slotId))
                 .toList();
-        Map<Long, String> names = userQueryService.findNames(
-                applications.stream().map(ApplicationInfo::userId).toList());
+        List<Long> userIds = applications.stream().map(ApplicationInfo::userId).toList();
+        Map<Long, String> names = userQueryService.findNames(userIds);
+        Map<Long, MatchingProfile> profiles = profileQueryService.findMatchingProfiles(userIds);
+        Map<Long, List<AttendanceView>> attendances = attendanceQueryService.findByUsers(userIds);
+        Map<Long, Long> reported = sanctionService.reports(false).stream()
+                .collect(Collectors.groupingBy(ReportView::reportedUserId, Collectors.counting()));
+        int year = LocalDate.now(clock).getYear();
         return applications.stream()
                 .map(application -> {
                     ParticipantStatus status = ParticipantStatus.of(application.applicationStatus(),
                             application.paymentStatus(), application.matchStatus());
+                    MatchingProfile profile = profiles.get(application.userId());
+                    List<AttendanceView> history = attendances.getOrDefault(application.userId(), List.of());
                     return new SlotApplicant(application.id(), application.userId(), names.get(application.userId()),
+                            profile == null ? null : profile.ageIn(year),
+                            profile == null ? null : profile.gender().getLabel(),
+                            profile == null || profile.mbti() == null ? null : profile.mbti().code(),
                             application.ticketType().getLabel(),
                             application.regions().stream().sorted().map(Region::getLabel).toList(), status,
                             status.getLabel(), application.paymentStatus().getLabel(),
-                            slotId.equals(application.confirmedSlotId()), application.submittedAt());
+                            slotId.equals(application.confirmedSlotId()), application.submittedAt(),
+                            countAttendance(history, AttendanceStatus.ATTENDED),
+                            countAttendance(history, AttendanceStatus.NO_SHOW)
+                                    + countAttendance(history, AttendanceStatus.NO_SHOW_CANDIDATE),
+                            countAttendance(history, AttendanceStatus.CANCELED_LATE),
+                            reported.getOrDefault(application.userId(), 0L).intValue());
                 })
+                .toList();
+    }
+
+    /** 신청 하나의 신청·결제·매칭·참석 상태 변경 이력 (시간순, PRD 16절) */
+    public List<StatusChange> statusHistory(Long applicationId) {
+        return Stream.concat(applicationQueryService.statusHistory(applicationId).stream(),
+                        attendanceQueryService.statusHistory(applicationId).stream())
+                .sorted(Comparator.comparing(StatusChange::at))
+                .toList();
+    }
+
+    /** 결제·환불 내역 (최근 500건) */
+    public List<PaymentRow> payments() {
+        List<PaymentRecordView> payments = paymentQueryService.findRecent();
+        Map<Long, String> names = userQueryService.findNames(payments.stream().map(PaymentRecordView::userId).toList());
+        return payments.stream().map(payment -> new PaymentRow(names.get(payment.userId()), payment)).toList();
+    }
+
+    /** 자동 메시지 발송 이력 (최근 500건) */
+    public List<NotificationRow> notifications() {
+        List<NotificationFailure> notifications = notificationQueryService.findRecent();
+        Map<Long, String> names = userQueryService.findNames(
+                notifications.stream().map(NotificationFailure::userId).toList());
+        return notifications.stream()
+                .map(notification -> new NotificationRow(names.get(notification.userId()), notification))
+                .toList();
+    }
+
+    /** 신고 전체 이력 (처리된 것 포함, 최신부터) */
+    public List<ReportRow> reportHistory() {
+        List<ReportView> reports = sanctionService.reports(false);
+        Map<Long, String> names = userQueryService.findNames(reports.stream()
+                .flatMap(report -> Stream.of(report.reporterUserId(), report.reportedUserId()))
+                .collect(Collectors.toSet()));
+        return reports.stream()
+                .sorted(Comparator.comparing(ReportView::reportedAt).reversed())
+                .map(report -> new ReportRow(names.get(report.reporterUserId()), names.get(report.reportedUserId()),
+                        report))
                 .toList();
     }
 

@@ -20,6 +20,8 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import lombok.AccessLevel;
+import org.hibernate.envers.Audited;
+import org.hibernate.envers.NotAudited;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -27,6 +29,8 @@ import lombok.NoArgsConstructor;
  * 참가 신청. 참가 가능한 회차(날짜)와 희망 지역을 복수로 고른다.
  * 신청·결제·매칭 상태는 PRD 12절대로 각각 분리해 저장한다.
  */
+/** 상태 변경은 Envers가 이력으로 남긴다 (희망 지역·날짜 목록은 제외) */
+@Audited
 @Getter
 @Entity
 @Table(name = "applications", indexes = @Index(name = "idx_applications_user", columnList = "userId"))
@@ -44,12 +48,14 @@ public class Application extends BaseTimeEntity {
     @Column(nullable = false, length = 20)
     private TicketType ticketType;
 
+    @NotAudited
     @ElementCollection
     @CollectionTable(name = "application_regions", joinColumns = @JoinColumn(name = "application_id"))
     @Enumerated(EnumType.STRING)
     @Column(name = "region", length = 30)
     private Set<Region> regions = new HashSet<>();
 
+    @NotAudited
     @ElementCollection
     @CollectionTable(name = "application_slots", joinColumns = @JoinColumn(name = "application_id"))
     @Column(name = "slot_id")
