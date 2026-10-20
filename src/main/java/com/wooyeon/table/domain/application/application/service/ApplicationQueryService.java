@@ -83,6 +83,11 @@ public class ApplicationQueryService {
     }
 
     /** 신청 완료 이후의 모든 신청 (운영 현황 집계용, 최근 것부터) */
+    /** 회차를 지워도 되는지 볼 때: 그 회차를 고른 신청이 있는지 (취소 포함) */
+    public boolean hasApplications(Long slotId) {
+        return applicationRepository.existsBySlotId(slotId);
+    }
+
     public List<ApplicationInfo> findAllSubmitted() {
         return applicationRepository.findAllSubmitted().stream().map(ApplicationInfo::from).toList();
     }

@@ -45,6 +45,11 @@ public class NotificationService {
         }
     }
 
+    /** 잘못 만든 회차를 지울 때처럼, 보낸 알림을 거둬들인다. 지운 수 */
+    public int withdraw(String dedupKeyPrefix) {
+        return notificationRepository.deleteByDedupKeyPrefix(dedupKeyPrefix);
+    }
+
     /** 푸시로 보낸다 (앱 알림함에는 예약 시각부터 이미 보인다). 푸시 실패는 재시도 대상 */
     public void deliver(Notification notification, LocalDateTime now) {
         try {

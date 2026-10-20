@@ -3,6 +3,7 @@ package com.wooyeon.table.domain.application.presentation;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.not;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -17,6 +18,7 @@ import com.wooyeon.table.support.IntegrationTest;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.TemporalAdjusters;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
@@ -64,7 +66,7 @@ class AccountApplyFlowTest {
     @Test
     void 운영자는_회차를_만들고_참가자는_마감_전_회차만_본다() throws Exception {
         String admin = login("admin");
-        LocalDate open = LocalDate.now().plusDays(400);
+        LocalDate open = LocalDate.now().plusDays(400).with(TemporalAdjusters.next(DayOfWeek.THURSDAY));
         LocalDate closed = LocalDate.now().plusDays(1);
         eventSlotCommandService.findOrCreate(closed);
 
@@ -79,6 +81,37 @@ class AccountApplyFlowTest {
                 .andExpect(jsonPath("$.data[*].eventDate").value(hasItem(open.toString())))
                 .andExpect(jsonPath("$.data[*].eventDate").value(not(hasItem(closed.toString()))))
                 .andExpect(jsonPath("$.data[0].regions.length()").value(4));
+    }
+
+    @Test
+    void 회차는_목요일만_만들고_신청자가_없을_때만_지울_수_있다() throws Exception {
+        String admin = login("admin");
+        LocalDate thursday = LocalDate.now().plusDays(500).with(TemporalAdjusters.next(DayOfWeek.THURSDAY));
+
+        mockMvc.perform(authed(post("/api/admin/slots"), admin).contentType(MediaType.APPLICATION_JSON)
+                        .content(json(Map.of("eventDate", thursday.plusDays(2).toString()))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.code").value("EVENT_SLOT_NOT_THURSDAY"));
+
+        long empty = body(mockMvc.perform(authed(post("/api/admin/slots"), admin)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(json(Map.of("eventDate", thursday.toString()))))).path("data").path("id").asLong();
+        long applied = body(mockMvc.perform(authed(post("/api/admin/slots"), admin)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(json(Map.of("eventDate", thursday.plusWeeks(1).toString()))))).path("data").path("id").asLong();
+        String demo = login("demo3");
+        saveProfile(demo);
+        agree(demo);
+        apply(demo, "SINGLE", applied).andExpect(status().isOk());
+
+        mockMvc.perform(authed(delete("/api/admin/slots/" + applied), admin))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.error.code").value("EVENT_SLOT_NOT_DELETABLE"));
+        mockMvc.perform(authed(delete("/api/admin/slots/" + empty), admin))
+                .andExpect(status().isOk());
+        mockMvc.perform(authed(get("/api/admin/slots"), admin))
+                .andExpect(jsonPath("$.data[*].id").value(not(hasItem((int) empty))))
+                .andExpect(jsonPath("$.data[*].id").value(hasItem((int) applied)));
     }
 
     @Test
