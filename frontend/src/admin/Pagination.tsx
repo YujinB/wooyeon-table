@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 export const PAGE_SIZE = 20;
 
@@ -33,21 +33,28 @@ function pageNumbers(page: number, pageCount: number): (number | null)[] {
 export function Pagination({ page, pageCount, total, setPage, pageSize = PAGE_SIZE }: {
   page: number; pageCount: number; total: number; setPage: (page: number) => void; pageSize?: number;
 }) {
+  const ref = useRef<HTMLElement>(null);
   if (pageCount <= 1) return null;
   const from = (page - 1) * pageSize + 1;
   const to = Math.min(page * pageSize, total);
+  // 페이지를 넘기면 바로 위 표의 첫 줄부터 보이게 (표 머리가 화면 위로 지나갔을 때만)
+  const go = (next: number) => {
+    setPage(next);
+    const list = ref.current?.previousElementSibling;
+    if (list && list.getBoundingClientRect().top < 0) list.scrollIntoView({ block: 'start' });
+  };
   return (
-    <nav className="pager" aria-label="페이지">
+    <nav className="pager" aria-label="페이지" ref={ref}>
       <span className="muted small">{total}건 중 {from}–{to}</span>
       <div className="pager-buttons">
-        <button className="pager-btn" disabled={page === 1} onClick={() => setPage(page - 1)}>이전</button>
+        <button className="pager-btn" disabled={page === 1} onClick={() => go(page - 1)}>이전</button>
         {pageNumbers(page, pageCount).map((p, i) => p === null
           ? <span key={`gap-${i}`} className="pager-gap">…</span>
           : (
             <button key={p} className={`pager-btn ${p === page ? 'on' : ''}`} aria-current={p === page ? 'page' : undefined}
-              onClick={() => setPage(p)}>{p}</button>
+              onClick={() => go(p)}>{p}</button>
           ))}
-        <button className="pager-btn" disabled={page === pageCount} onClick={() => setPage(page + 1)}>다음</button>
+        <button className="pager-btn" disabled={page === pageCount} onClick={() => go(page + 1)}>다음</button>
       </div>
     </nav>
   );
