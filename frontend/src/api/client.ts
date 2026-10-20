@@ -50,7 +50,21 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
   return json.data as T;
 }
 
+/** 로그인 토큰을 붙여 파일을 받아 브라우저 다운로드로 저장 (CSV 등) */
+async function download(path: string, filename: string): Promise<void> {
+  const token = session.token();
+  const response = await fetch(path, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+  if (!response.ok) throw new ApiError(response.status, 'DOWNLOAD_FAILED', '파일을 받지 못했어요');
+  const url = URL.createObjectURL(await response.blob());
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
 export const api = {
+  download,
   get: <T>(path: string) => request<T>('GET', path),
   post: <T>(path: string, body?: unknown) => request<T>('POST', path, body ?? {}),
   put: <T>(path: string, body: unknown) => request<T>('PUT', path, body),

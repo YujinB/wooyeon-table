@@ -167,25 +167,55 @@ function ApplicantsTab({ slotId }: { slotId: string }) {
   if (!applicants.data) return applicants.error ? <ErrorBox message={applicants.error} /> : <Loading />;
   if (applicants.data.length === 0) return <div className="alert info">이 날짜를 고른 신청이 없어요</div>;
   return (
-    <div className="table-wrap">
-      <table className="data">
-        <thead>
-          <tr><th>이름</th><th>이용권</th><th>지역</th><th>상태</th><th>결제</th><th>신청 시각</th></tr>
-        </thead>
-        <tbody>
-          {applicants.data.map((a) => (
-            <tr key={a.applicationId}>
-              <td className="nowrap"><b>{a.name}</b></td>
-              <td>{a.ticketLabel}</td>
-              <td className="small">{a.regions.join(', ')}</td>
-              <td><span className={`pill ${statusTone(a.status)}`}>{a.statusLabel}</span></td>
-              <td className="small">{a.paymentStatusLabel}</td>
-              <td className="small">{dateTime(a.submittedAt)}</td>
+    <>
+      <div className="row" style={{ marginBottom: 12, flexWrap: 'wrap' }}>
+        <CsvButton path={`/api/admin/slots/${slotId}/applicants.csv`} filename={`applicants-${slotId}.csv`} label="신청자 CSV" />
+        <CsvButton path={`/api/admin/slots/${slotId}/tables.csv`} filename={`tables-${slotId}.csv`} label="테이블 결과 CSV" />
+      </div>
+      <div className="table-wrap">
+        <table className="data">
+          <thead>
+            <tr>
+              <th>이름</th><th>나이·성별</th><th>MBTI</th><th>이용권</th><th>지역</th><th>상태</th><th>결제</th>
+              <th>이전 이력</th><th>신청 시각</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody>
+            {applicants.data.map((a) => (
+              <tr key={a.applicationId}>
+                <td className="nowrap"><b>{a.name}</b></td>
+                <td className="nowrap">{a.age ?? '-'} · {a.gender ?? '-'}</td>
+                <td className="nowrap">{a.mbti ?? '-'}</td>
+                <td className="nowrap">{a.ticketLabel}</td>
+                <td className="small">{a.regions.join(', ')}</td>
+                <td><span className={`pill ${statusTone(a.status)}`}>{a.statusLabel}</span></td>
+                <td className="small nowrap">{a.paymentStatusLabel}</td>
+                <td className="small nowrap">
+                  참석 {a.attended}
+                  {a.noShow > 0 && <span style={{ color: 'var(--danger)' }}> · 노쇼 {a.noShow}</span>}
+                  {a.canceledLate > 0 && <span style={{ color: 'var(--warn)' }}> · 늦은 취소 {a.canceledLate}</span>}
+                  {a.reported > 0 && <span style={{ color: 'var(--danger)' }}> · 신고 {a.reported}</span>}
+                </td>
+                <td className="small nowrap">{dateTime(a.submittedAt)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </>
+  );
+}
+
+function CsvButton({ path, filename, label }: { path: string; filename: string; label: string }) {
+  const [error, setError] = useState<string | null>(null);
+  return (
+    <>
+      <button className="btn btn-ghost btn-sm"
+        onClick={() => api.download(path, filename).then(() => setError(null)).catch((e) => setError(errorText(e)))}>
+        {label}
+      </button>
+      {error && <span className="small" style={{ color: 'var(--danger)' }}>{error}</span>}
+    </>
   );
 }
 

@@ -196,6 +196,13 @@ export interface SlotApplicant {
   applicationId: number;
   userId: number;
   name: string;
+  age: number | null;
+  gender: string | null;
+  mbti: string | null;
+  attended: number;
+  noShow: number;
+  canceledLate: number;
+  reported: number;
   ticketLabel: string;
   regions: string[];
   status: string;
